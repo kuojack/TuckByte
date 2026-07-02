@@ -18,4 +18,6 @@ swift test
 swift run ZipForge
 ```
 
+`swift test` and full SwiftPM builds require a complete Xcode installation because XCTest must be available. With Command Line Tools only, core source syntax can still be checked with `swiftc -parse Sources/ZipForgeCore/*.swift`.
+
 The initial build is designed for local development and direct execution, not App Store distribution. Later versions can add libarchive/7z support, password handling, Finder integration, app signing, and a packaged `.app` release.
