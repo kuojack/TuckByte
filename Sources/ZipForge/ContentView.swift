@@ -36,7 +36,7 @@ struct ContentView: View {
             Button(action: viewModel.extractSelectedArchive) {
                 Label("解壓", systemImage: "arrow.down.doc")
             }
-            .disabled(viewModel.archiveURL == nil || viewModel.isWorking)
+            .disabled(!viewModel.hasArchiveLoaded || viewModel.isWorking)
             Button(action: viewModel.createZipPanel) {
                 Label("建立 ZIP", systemImage: "archivebox")
             }
@@ -64,6 +64,9 @@ struct ContentView: View {
                 .foregroundColor(.secondary)
             Text("拖放 ZIP 檔到這裡")
                 .font(.subheadline)
+                .foregroundColor(.secondary)
+            Text("拖入檔案或資料夾可建立 ZIP")
+                .font(.caption)
                 .foregroundColor(.secondary)
         }
         .padding(20)
@@ -96,24 +99,61 @@ struct ContentView: View {
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
-                List(viewModel.entries) { entry in
-                    HStack {
-                        Image(systemName: entry.isDirectory ? "folder" : "doc")
-                            .foregroundColor(entry.isDirectory ? .accentColor : .secondary)
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(entry.name)
-                                .lineLimit(1)
-                            Text(entry.path)
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                                .lineLimit(1)
-                        }
-                        Spacer()
+                VStack(spacing: 0) {
+                    entryHeader
+                    Divider()
+                    List(viewModel.entries) { entry in
+                        entryRow(entry)
+                            .padding(.vertical, 3)
                     }
-                    .padding(.vertical, 3)
                 }
             }
         }
+    }
+
+    private var entryHeader: some View {
+        HStack(spacing: 12) {
+            Text("類型")
+                .frame(width: 56, alignment: .leading)
+            Text("名稱")
+                .frame(minWidth: 160, maxWidth: .infinity, alignment: .leading)
+            Text("大小")
+                .frame(width: 90, alignment: .trailing)
+            Text("修改時間")
+                .frame(width: 150, alignment: .leading)
+            Text("路徑")
+                .frame(minWidth: 180, maxWidth: .infinity, alignment: .leading)
+        }
+        .font(.caption.weight(.semibold))
+        .foregroundColor(.secondary)
+        .padding(.horizontal, 12)
+        .padding(.vertical, 8)
+    }
+
+    private func entryRow(_ entry: ArchiveEntry) -> some View {
+        HStack(spacing: 12) {
+            HStack(spacing: 6) {
+                Image(systemName: entry.isDirectory ? "folder" : "doc")
+                    .foregroundColor(entry.isDirectory ? .accentColor : .secondary)
+                Text(entry.typeDescription)
+            }
+            .frame(width: 56, alignment: .leading)
+            Text(entry.name)
+                .lineLimit(1)
+                .frame(minWidth: 160, maxWidth: .infinity, alignment: .leading)
+            Text(entry.formattedSize)
+                .foregroundColor(.secondary)
+                .frame(width: 90, alignment: .trailing)
+            Text(entry.formattedModifiedAt)
+                .foregroundColor(.secondary)
+                .frame(width: 150, alignment: .leading)
+            Text(entry.path)
+                .font(.caption)
+                .foregroundColor(.secondary)
+                .lineLimit(1)
+                .frame(minWidth: 180, maxWidth: .infinity, alignment: .leading)
+        }
+        .font(.system(size: 13))
     }
 
     private var statusBar: some View {
@@ -129,21 +169,29 @@ struct ContentView: View {
     }
 
     private func loadDroppedURLs(providers: [NSItemProvider]) -> Bool {
-        for provider in providers {
-            if provider.hasItemConformingToTypeIdentifier("public.file-url") {
-                provider.loadItem(forTypeIdentifier: "public.file-url", options: nil) { item, _ in
-                    guard let data = item as? Data,
-                          let url = URL(dataRepresentation: data, relativeTo: nil) else {
-                        return
-                    }
-                    DispatchQueue.main.async {
-                        viewModel.handleDrop(urls: [url])
-                    }
+        let fileProviders = providers.filter { $0.hasItemConformingToTypeIdentifier("public.file-url") }
+        guard !fileProviders.isEmpty else { return false }
+
+        var urls: [URL] = []
+        let lock = NSLock()
+        let group = DispatchGroup()
+        for provider in fileProviders {
+            group.enter()
+            provider.loadItem(forTypeIdentifier: "public.file-url", options: nil) { item, _ in
+                defer { group.leave() }
+                guard let data = item as? Data,
+                      let url = URL(dataRepresentation: data, relativeTo: nil) else {
+                    return
                 }
-                return true
+                lock.lock()
+                urls.append(url)
+                lock.unlock()
             }
         }
-        return false
+        group.notify(queue: .main) {
+            viewModel.handleDrop(urls: urls)
+        }
+        return true
     }
 }
 

@@ -12,21 +12,16 @@ public final class ShellArchiveService: ArchiveService {
 
     public func inspect(archiveURL: URL) throws -> [ArchiveEntry] {
         try validateReadableArchive(archiveURL)
-        let result = try runExecutable(zipInfoPath, arguments: ["-1", archiveURL.path], currentDirectoryURL: nil)
+        let result = try runExecutable(zipInfoPath, arguments: ["-l", "-T", archiveURL.path], currentDirectoryURL: nil)
         let entries = result.output
             .split(whereSeparator: \.isNewline)
             .map(String.init)
-            .filter { !$0.isEmpty }
-            .map { path -> ArchiveEntry in
-                let trimmedPath = path.trimmingCharacters(in: .whitespacesAndNewlines)
-                let name = URL(fileURLWithPath: trimmedPath).lastPathComponent
-                return ArchiveEntry(
-                    name: name.isEmpty ? trimmedPath : name,
-                    path: trimmedPath,
-                    size: nil,
-                    isDirectory: trimmedPath.hasSuffix("/"),
-                    modifiedAt: nil
-                )
+            .compactMap { Self.parseZipInfoLine($0) }
+            .sorted { lhs, rhs in
+                if lhs.isDirectory != rhs.isDirectory {
+                    return lhs.isDirectory
+                }
+                return lhs.path.localizedStandardCompare(rhs.path) == .orderedAscending
             }
 
         if entries.isEmpty {
@@ -57,9 +52,22 @@ public final class ShellArchiveService: ArchiveService {
             throw ArchiveServiceError.destinationAlreadyExists(destinationURL)
         }
 
-        let workingDirectory = sourceURLs[0].deletingLastPathComponent()
-        let names = sourceURLs.map { $0.lastPathComponent }
-        _ = try runExecutable(zipPath, arguments: ["-r", destinationURL.path] + names, currentDirectoryURL: workingDirectory)
+        let stagingDirectory = fileManager.temporaryDirectory
+            .appendingPathComponent("ZipForge-\(UUID().uuidString)", isDirectory: true)
+        try fileManager.createDirectory(at: stagingDirectory, withIntermediateDirectories: true, attributes: nil)
+        defer {
+            try? fileManager.removeItem(at: stagingDirectory)
+        }
+
+        var stagedNames: [String] = []
+        for sourceURL in sourceURLs {
+            let stagedName = uniqueStagedName(for: sourceURL, existingNames: Set(stagedNames))
+            let stagedURL = stagingDirectory.appendingPathComponent(stagedName)
+            try fileManager.copyItem(at: sourceURL, to: stagedURL)
+            stagedNames.append(stagedName)
+        }
+
+        _ = try runExecutable(zipPath, arguments: ["-r", destinationURL.path] + stagedNames, currentDirectoryURL: stagingDirectory)
     }
 
     private func validateReadableArchive(_ archiveURL: URL) throws {
@@ -95,6 +103,57 @@ public final class ShellArchiveService: ArchiveService {
             )
         }
         return CommandResult(output: output, status: process.terminationStatus)
+    }
+
+    private static func parseZipInfoLine(_ line: String) -> ArchiveEntry? {
+        let trimmedLine = line.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard trimmedLine.hasPrefix("-") || trimmedLine.hasPrefix("d") else {
+            return nil
+        }
+
+        let parts = trimmedLine.split(separator: " ", omittingEmptySubsequences: true)
+        guard parts.count >= 9,
+              let size = Int64(parts[3]) else {
+            return nil
+        }
+
+        let dateText = String(parts[7])
+        let path = parts[8...].joined(separator: " ")
+        let isDirectory = trimmedLine.hasPrefix("d") || path.hasSuffix("/")
+        let name = URL(fileURLWithPath: path).lastPathComponent
+
+        return ArchiveEntry(
+            name: name.isEmpty ? path.trimmingCharacters(in: CharacterSet(charactersIn: "/")) : name,
+            path: path,
+            size: isDirectory ? nil : size,
+            isDirectory: isDirectory,
+            modifiedAt: zipInfoDateFormatter.date(from: dateText)
+        )
+    }
+
+    private static let zipInfoDateFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.dateFormat = "yyyyMMdd.HHmmss"
+        return formatter
+    }()
+
+    private func uniqueStagedName(for sourceURL: URL, existingNames: Set<String>) -> String {
+        let baseName = sourceURL.lastPathComponent.isEmpty ? "Item" : sourceURL.lastPathComponent
+        guard existingNames.contains(baseName) else {
+            return baseName
+        }
+
+        let name = (baseName as NSString).deletingPathExtension
+        let ext = (baseName as NSString).pathExtension
+        var index = 2
+        while true {
+            let candidate = ext.isEmpty ? "\(name)-\(index)" : "\(name)-\(index).\(ext)"
+            if !existingNames.contains(candidate) {
+                return candidate
+            }
+            index += 1
+        }
     }
 }
 

@@ -24,6 +24,10 @@ final class ArchiveViewModel: ObservableObject {
         return ArchiveFormat(fileURL: archiveURL).displayName
     }
 
+    var hasArchiveLoaded: Bool {
+        archiveURL != nil
+    }
+
     func openArchivePanel() {
         let panel = NSOpenPanel()
         panel.allowsMultipleSelection = false
@@ -84,19 +88,53 @@ final class ArchiveViewModel: ObservableObject {
         guard savePanel.runModal() == .OK, let destinationURL = savePanel.url else { return }
 
         perform("正在建立 \(destinationURL.lastPathComponent)...") {
-            try self.archiveService.createZip(from: openPanel.urls, destinationURL: destinationURL)
-            let loadedEntries = try self.archiveService.inspect(archiveURL: destinationURL)
-            DispatchQueue.main.async {
-                self.archiveURL = destinationURL
-                self.entries = loadedEntries
-                self.statusMessage = "已建立 ZIP：\(destinationURL.path)"
-            }
+            try self.createZip(from: openPanel.urls, destinationURL: destinationURL)
+        }
+    }
+
+    func createZipFromDroppedItems(_ urls: [URL]) {
+        guard !urls.isEmpty else { return }
+        let savePanel = NSSavePanel()
+        savePanel.allowedFileTypes = ["zip"]
+        savePanel.nameFieldStringValue = defaultArchiveName(for: urls)
+        guard savePanel.runModal() == .OK, let destinationURL = savePanel.url else { return }
+
+        perform("正在建立 \(destinationURL.lastPathComponent)...") {
+            try self.createZip(from: urls, destinationURL: destinationURL)
         }
     }
 
     func handleDrop(urls: [URL]) {
-        guard let firstURL = urls.first else { return }
-        loadArchive(firstURL)
+        guard !urls.isEmpty else { return }
+        if urls.count == 1, ArchiveFormat(fileURL: urls[0]).isSupportedInFirstVersion {
+            loadArchive(urls[0])
+        } else if urls.count == 1 {
+            let format = ArchiveFormat(fileURL: urls[0])
+            if format == .sevenZip || format == .rar || format == .tar || format == .gzip {
+                loadArchive(urls[0])
+            } else {
+                createZipFromDroppedItems(urls)
+            }
+        } else {
+            createZipFromDroppedItems(urls)
+        }
+    }
+
+    private func createZip(from sourceURLs: [URL], destinationURL: URL) throws {
+        try self.archiveService.createZip(from: sourceURLs, destinationURL: destinationURL)
+        let loadedEntries = try self.archiveService.inspect(archiveURL: destinationURL)
+        DispatchQueue.main.async {
+            self.archiveURL = destinationURL
+            self.entries = loadedEntries
+            self.statusMessage = "已建立 ZIP：\(destinationURL.path)"
+        }
+    }
+
+    private func defaultArchiveName(for urls: [URL]) -> String {
+        if urls.count == 1 {
+            return "\(urls[0].deletingPathExtension().lastPathComponent).zip"
+        }
+        return "Archive.zip"
     }
 
     private func perform(_ message: String, work: @escaping () throws -> Void) {
@@ -113,9 +151,36 @@ final class ArchiveViewModel: ObservableObject {
                 DispatchQueue.main.async {
                     self.isWorking = false
                     self.errorMessage = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
-                    self.statusMessage = "操作失敗。"
+                    self.statusMessage = self.errorMessage ?? "操作失敗。"
                 }
             }
         }
     }
+}
+
+extension ArchiveEntry {
+    var formattedSize: String {
+        guard let size = size else {
+            return isDirectory ? "--" : "未知"
+        }
+        return ByteCountFormatter.string(fromByteCount: size, countStyle: .file)
+    }
+
+    var formattedModifiedAt: String {
+        guard let modifiedAt = modifiedAt else {
+            return "--"
+        }
+        return ArchiveEntry.displayDateFormatter.string(from: modifiedAt)
+    }
+
+    var typeDescription: String {
+        isDirectory ? "資料夾" : "檔案"
+    }
+
+    private static let displayDateFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .medium
+        formatter.timeStyle = .short
+        return formatter
+    }()
 }

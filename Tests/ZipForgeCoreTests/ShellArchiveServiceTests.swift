@@ -43,13 +43,41 @@ final class ShellArchiveServiceTests: XCTestCase {
         try service.createZip(from: [sourceDirectory], destinationURL: zipURL)
 
         let entries = try service.inspect(archiveURL: zipURL)
-        XCTAssertTrue(entries.contains { $0.path == "Source/hello.txt" || $0.path == "Source/hello.txt/" })
+        let fileEntry = try XCTUnwrap(entries.first { $0.path == "Source/hello.txt" })
+        XCTAssertEqual(fileEntry.name, "hello.txt")
+        XCTAssertEqual(fileEntry.size, 14)
+        XCTAssertFalse(fileEntry.isDirectory)
+        XCTAssertNotNil(fileEntry.modifiedAt)
 
         let destinationURL = tempDirectory.appendingPathComponent("Extracted", isDirectory: true)
         try service.extract(archiveURL: zipURL, destinationURL: destinationURL)
         let extractedFileURL = destinationURL.appendingPathComponent("Source/hello.txt")
         let extractedText = try String(contentsOf: extractedFileURL)
         XCTAssertEqual(extractedText, "Hello ZipForge")
+    }
+
+    func testCreateZipFromMultipleParentDirectories() throws {
+        let firstDirectory = tempDirectory.appendingPathComponent("First", isDirectory: true)
+        let secondDirectory = tempDirectory.appendingPathComponent("Second", isDirectory: true)
+        try FileManager.default.createDirectory(at: firstDirectory, withIntermediateDirectories: true, attributes: nil)
+        try FileManager.default.createDirectory(at: secondDirectory, withIntermediateDirectories: true, attributes: nil)
+
+        let firstFile = firstDirectory.appendingPathComponent("one.txt")
+        let secondFile = secondDirectory.appendingPathComponent("two.txt")
+        try "One".data(using: .utf8)!.write(to: firstFile)
+        try "Two".data(using: .utf8)!.write(to: secondFile)
+
+        let zipURL = tempDirectory.appendingPathComponent("MultiSource.zip")
+        try service.createZip(from: [firstFile, secondFile], destinationURL: zipURL)
+
+        let entries = try service.inspect(archiveURL: zipURL)
+        XCTAssertTrue(entries.contains { $0.path == "one.txt" })
+        XCTAssertTrue(entries.contains { $0.path == "two.txt" })
+
+        let destinationURL = tempDirectory.appendingPathComponent("MultiExtracted", isDirectory: true)
+        try service.extract(archiveURL: zipURL, destinationURL: destinationURL)
+        XCTAssertEqual(try String(contentsOf: destinationURL.appendingPathComponent("one.txt")), "One")
+        XCTAssertEqual(try String(contentsOf: destinationURL.appendingPathComponent("two.txt")), "Two")
     }
 
     func testRefusesToOverwriteExistingDestination() throws {
