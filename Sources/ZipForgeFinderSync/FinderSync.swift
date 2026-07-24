@@ -1,33 +1,43 @@
 import AppKit
 import FinderSync
+import OSLog
 import ZipForgeIntegration
 
 final class FinderSync: FIFinderSync {
     private let controller = FIFinderSyncController.default()
+    private let logger = Logger(
+        subsystem: "com.zipforge.ZipForge.FinderSync",
+        category: "FinderSync"
+    )
 
     override init() {
         super.init()
-        controller.directoryURLs = [
-            URL(fileURLWithPath: "/", isDirectory: true)
-        ]
+        let monitoredDirectories = Self.monitoredDirectories()
+        controller.directoryURLs = monitoredDirectories
+        logger.notice(
+            "Monitoring \(monitoredDirectories.count, privacy: .public) Finder roots"
+        )
     }
 
     override func menu(for menuKind: FIMenuKind) -> NSMenu? {
         guard menuKind == .contextualMenuForItems else { return nil }
 
         let selectedURLs = currentSelectedURLs()
+        logger.notice(
+            "Context menu requested for \(selectedURLs.count, privacy: .public) items"
+        )
         guard FinderMenuPolicy.canAddToArchive(selectedURLs) else { return nil }
 
         let menu = NSMenu(title: "ZipForge")
         menu.addItem(
-            withTitle: "加入壓縮檔",
+            withTitle: "ZipForge：加入壓縮檔",
             action: #selector(addToArchive),
             keyEquivalent: ""
         )
 
         if FinderMenuPolicy.canExtractHere(selectedURLs) {
             menu.addItem(
-                withTitle: "解壓縮至此",
+                withTitle: "ZipForge：解壓縮至此",
                 action: #selector(extractHere),
                 keyEquivalent: ""
             )
@@ -72,5 +82,29 @@ final class FinderSync: FIFinderSync {
             return [targetedURL]
         }
         return []
+    }
+
+    private static func monitoredDirectories() -> Set<URL> {
+        let paths = [
+            "/Applications",
+            "/Library",
+            "/System",
+            "/Users",
+            "/Volumes",
+            "/opt",
+            "/private",
+            "/usr"
+        ]
+
+        return Set(paths.compactMap { path in
+            var isDirectory: ObjCBool = false
+            guard FileManager.default.fileExists(
+                atPath: path,
+                isDirectory: &isDirectory
+            ), isDirectory.boolValue else {
+                return nil
+            }
+            return URL(fileURLWithPath: path, isDirectory: true)
+        })
     }
 }
