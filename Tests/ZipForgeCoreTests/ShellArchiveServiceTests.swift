@@ -110,6 +110,29 @@ final class ShellArchiveServiceTests: XCTestCase {
         XCTAssertTrue(FileManager.default.fileExists(atPath: destinationURL.appendingPathComponent(filename).path))
     }
 
+    func testWrapsExistingArchiveInAnotherZip() throws {
+        let sourceFileURL = tempDirectory.appendingPathComponent("內容.txt")
+        try "Nested by ZipForge".data(using: .utf8)!.write(to: sourceFileURL)
+
+        let innerArchiveURL = tempDirectory.appendingPathComponent("Inner.zip")
+        try service.createZip(from: [sourceFileURL], destinationURL: innerArchiveURL)
+
+        let outerArchiveURL = tempDirectory.appendingPathComponent("Outer.zip")
+        let settings = CompressionSettings(outputFormat: .zip, compressionLevel: 9, encryption: .none)
+        try service.createZip(from: [innerArchiveURL], destinationURL: outerArchiveURL, settings: settings)
+
+        let outerEntries = try service.inspect(archiveURL: outerArchiveURL)
+        XCTAssertTrue(outerEntries.contains { $0.path == "Inner.zip" })
+        XCTAssertFalse(outerEntries.contains { $0.path == "內容.txt" })
+
+        let destinationURL = tempDirectory.appendingPathComponent("OuterExtracted", isDirectory: true)
+        try service.extract(archiveURL: outerArchiveURL, destinationURL: destinationURL)
+        let extractedInnerArchiveURL = destinationURL.appendingPathComponent("Inner.zip")
+        XCTAssertTrue(FileManager.default.fileExists(atPath: extractedInnerArchiveURL.path))
+        let innerEntries = try service.inspect(archiveURL: extractedInnerArchiveURL)
+        XCTAssertTrue(innerEntries.contains { $0.path == "內容.txt" })
+    }
+
     func testEncryptedZipRequiresPassword() throws {
         let sourceURL = tempDirectory.appendingPathComponent("secret.txt")
         try "Secret".data(using: .utf8)!.write(to: sourceURL)

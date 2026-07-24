@@ -1,14 +1,15 @@
 # ZipForge
 
-ZipForge is an early macOS archive utility written in Swift. The first version focuses on a usable local workflow: open a zip archive, inspect entries, extract to a chosen folder, and create a new zip from files or folders.
+ZipForge is an early macOS archive utility written in Swift. The first version focuses on a usable local workflow: open a zip archive, inspect entries, extract to a chosen folder, create a new zip from files or folders, and wrap an existing ZIP in another compressed layer.
 
 ## Current scope
 
 - SwiftUI macOS interface
 - Drag and drop archive selection
 - Drag and drop compression queue for files and folders
+- Wrap an opened ZIP in another ZIP layer with its own compression level or password
 - Compression settings panel with format choice, speed presets, compression level, and traditional ZIP password protection
-- Zip inspection through `/usr/bin/zipinfo`
+- Zip inspection through `/usr/bin/zipinfo` and `/usr/bin/tar`
 - Zip extraction through `/usr/bin/ditto`
 - Zip creation through `/usr/bin/zip`
 - Friendly unsupported-format handling for `.7z`, `.rar`, `.tar`, `.gz`, and unknown files

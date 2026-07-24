@@ -44,6 +44,10 @@ struct ContentView: View {
                 Label("解壓", systemImage: "arrow.down.doc")
             }
             .disabled(!viewModel.hasArchiveLoaded || viewModel.isWorking)
+            Button(action: viewModel.wrapSelectedArchive) {
+                Label("再壓縮一層", systemImage: "archivebox.fill")
+            }
+            .disabled(!viewModel.canWrapArchive)
             Button(action: viewModel.createZipPanel) {
                 Label("建立 ZIP", systemImage: "archivebox")
             }
@@ -86,7 +90,7 @@ struct ContentView: View {
                 Text("把檔案或資料夾拖進來")
                     .font(.headline)
                     .multilineTextAlignment(.center)
-                Text("也可以拖入 ZIP 直接瀏覽內容")
+                Text("拖入 ZIP 後可解壓或再壓縮一層")
                     .font(.caption)
                     .foregroundColor(.secondary)
             }
@@ -301,11 +305,11 @@ struct ContentView: View {
 
             Spacer()
 
-            Button(action: viewModel.createZipFromPendingItems) {
-                Label("建立壓縮檔", systemImage: "archivebox.fill")
+            Button(action: viewModel.createArchiveFromCurrentContext) {
+                Label(viewModel.currentContextActionTitle, systemImage: "archivebox.fill")
                     .frame(maxWidth: .infinity)
             }
-            .disabled(!viewModel.canCreatePendingZip)
+            .disabled(!viewModel.canCreateFromCurrentContext)
             .controlSize(.large)
         }
         .padding(14)
