@@ -41,6 +41,26 @@ final class FinderIntegrationTests: XCTestCase {
         XCTAssertEqual(decodedRequest, request)
     }
 
+    func testCompressHereURLRoundTripPreservesUnicodeSpacesAndMultiplePaths() throws {
+        let firstURL = tempDirectory.appendingPathComponent("中文 檔案.txt")
+        let secondURL = tempDirectory.appendingPathComponent("資料夾", isDirectory: true)
+        try Data().write(to: firstURL)
+        try FileManager.default.createDirectory(
+            at: secondURL,
+            withIntermediateDirectories: true,
+            attributes: nil
+        )
+
+        let request = FinderActionRequest(
+            operation: .compressHere,
+            selectedURLs: [firstURL, secondURL]
+        )
+        let encodedURL = try XCTUnwrap(request.url)
+        let decodedRequest = try XCTUnwrap(FinderActionRequest(url: encodedURL))
+
+        XCTAssertEqual(decodedRequest, request)
+    }
+
     func testFinderActionRejectsUnknownOperationAndMissingFiles() throws {
         let unknownOperationURL = try XCTUnwrap(
             URL(string: "tuckbyte://finder?operation=unknown&path=/tmp/file.zip")

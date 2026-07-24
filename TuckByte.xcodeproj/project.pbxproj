@@ -26,6 +26,7 @@
 		A60000000000000000000011 /* libTuckByteIntegration.a in Frameworks */ = {isa = PBXBuildFile; fileRef = A50000000000000000000015 /* libTuckByteIntegration.a */; };
 		A60000000000000000000012 /* libTuckByteIntegration.a in Frameworks */ = {isa = PBXBuildFile; fileRef = A50000000000000000000015 /* libTuckByteIntegration.a */; };
 		A60000000000000000000013 /* TuckByteFinderSync.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = A50000000000000000000017 /* TuckByteFinderSync.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, CodeSignOnCopy, ); }; };
+		A60000000000000000000014 /* ArchiveInPlaceCompressor.swift in Sources */ = {isa = PBXBuildFile; fileRef = A50000000000000000000018 /* ArchiveInPlaceCompressor.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -68,11 +69,12 @@
 		A50000000000000000000010 /* TuckByte-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "TuckByte-Info.plist"; sourceTree = "<group>"; };
 		A50000000000000000000011 /* TuckByteFinderSync-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "TuckByteFinderSync-Info.plist"; sourceTree = "<group>"; };
 		A50000000000000000000012 /* TuckByteFinderSync.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = TuckByteFinderSync.entitlements; sourceTree = "<group>"; };
-		A50000000000000000000013 /* AppIcon.svg */ = {isa = PBXFileReference; lastKnownFileType = image.svg; path = AppIcon.svg; sourceTree = "<group>"; };
+		A50000000000000000000013 /* AppIcon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = AppIcon.png; sourceTree = "<group>"; };
 		A50000000000000000000014 /* libTuckByteCore.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libTuckByteCore.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		A50000000000000000000015 /* libTuckByteIntegration.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libTuckByteIntegration.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		A50000000000000000000016 /* TuckByte.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = TuckByte.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		A50000000000000000000017 /* TuckByteFinderSync.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = TuckByteFinderSync.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		A50000000000000000000018 /* ArchiveInPlaceCompressor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ArchiveInPlaceCompressor.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -134,6 +136,7 @@
 			isa = PBXGroup;
 			children = (
 				A50000000000000000000001 /* ArchiveBatchExtractor.swift */,
+				A50000000000000000000018 /* ArchiveInPlaceCompressor.swift */,
 				A50000000000000000000002 /* ArchiveEntry.swift */,
 				A50000000000000000000003 /* ArchiveFormat.swift */,
 				A50000000000000000000004 /* ArchiveService.swift */,
@@ -186,7 +189,7 @@
 		A20000000000000000000009 /* Resources */ = {
 			isa = PBXGroup;
 			children = (
-				A50000000000000000000013 /* AppIcon.svg */,
+				A50000000000000000000013 /* AppIcon.png */,
 			);
 			path = Resources;
 			sourceTree = "<group>";
@@ -308,6 +311,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				A60000000000000000000001 /* ArchiveBatchExtractor.swift in Sources */,
+				A60000000000000000000014 /* ArchiveInPlaceCompressor.swift in Sources */,
 				A60000000000000000000002 /* ArchiveEntry.swift in Sources */,
 				A60000000000000000000003 /* ArchiveFormat.swift in Sources */,
 				A60000000000000000000004 /* ArchiveService.swift in Sources */,
@@ -436,7 +440,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MARKETING_VERSION = 0.3.0;
+				MARKETING_VERSION = 0.4.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.kuojack.TuckByte;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
@@ -456,7 +460,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MARKETING_VERSION = 0.3.0;
+				MARKETING_VERSION = 0.4.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.kuojack.TuckByte;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
@@ -478,7 +482,7 @@
 					"@executable_path/../Frameworks",
 					"@executable_path/../../../../Frameworks",
 				);
-				MARKETING_VERSION = 0.3.0;
+				MARKETING_VERSION = 0.4.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.kuojack.TuckByte.FinderSync;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
@@ -501,7 +505,7 @@
 					"@executable_path/../Frameworks",
 					"@executable_path/../../../../Frameworks",
 				);
-				MARKETING_VERSION = 0.3.0;
+				MARKETING_VERSION = 0.4.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.kuojack.TuckByte.FinderSync;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;

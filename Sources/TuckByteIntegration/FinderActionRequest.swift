@@ -3,6 +3,7 @@ import Foundation
 public struct FinderActionRequest: Equatable {
     public enum Operation: String, Equatable {
         case addToArchive
+        case compressHere
         case extractHere
     }
 

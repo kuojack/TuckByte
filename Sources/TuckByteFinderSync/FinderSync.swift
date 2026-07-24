@@ -30,8 +30,13 @@ final class FinderSync: FIFinderSync {
 
         let menu = NSMenu(title: "TuckByte")
         menu.addItem(
-            withTitle: "TuckByte：加入壓縮檔",
-            action: #selector(addToArchive),
+            withTitle: "TuckByte：加入壓縮並開啟介面",
+            action: #selector(addToArchiveWithInterface),
+            keyEquivalent: ""
+        )
+        menu.addItem(
+            withTitle: "TuckByte：加入壓縮",
+            action: #selector(compressHere),
             keyEquivalent: ""
         )
 
@@ -45,8 +50,12 @@ final class FinderSync: FIFinderSync {
         return menu
     }
 
-    @objc private func addToArchive() {
+    @objc private func addToArchiveWithInterface() {
         dispatch(operation: .addToArchive, activatesApp: true)
+    }
+
+    @objc private func compressHere() {
+        dispatch(operation: .compressHere, activatesApp: false)
     }
 
     @objc private func extractHere() {

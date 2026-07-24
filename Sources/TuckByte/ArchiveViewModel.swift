@@ -155,12 +155,35 @@ final class ArchiveViewModel: ObservableObject {
         statusMessage = "待壓縮清單已清空。"
     }
 
-    func replacePendingItems(_ urls: [URL]) {
+    func replacePendingItems(
+        _ urls: [URL],
+        statusMessage customStatusMessage: String? = nil
+    ) {
         archiveURL = nil
         entries = []
         pendingItems = urls.map { PendingArchiveItem(url: $0) }
         errorMessage = nil
-        statusMessage = "已從 Finder 加入 \(pendingItems.count) 個項目。"
+        statusMessage = customStatusMessage
+            ?? "已從 Finder 加入 \(pendingItems.count) 個項目。"
+    }
+
+    func beginFinderCompression(count: Int) {
+        errorMessage = nil
+        isWorking = true
+        statusMessage = "正在背景壓縮 \(count) 個項目..."
+    }
+
+    func completeFinderCompression(_ result: ArchiveCompressionResult) {
+        isWorking = false
+        if let destinationURL = result.destinationURL, result.succeeded {
+            errorMessage = nil
+            statusMessage = "壓縮完成：\(destinationURL.path)"
+            return
+        }
+
+        let message = result.errorDescription ?? "無法建立 ZIP。"
+        errorMessage = message
+        statusMessage = message
     }
 
     func beginFinderExtraction(count: Int) {

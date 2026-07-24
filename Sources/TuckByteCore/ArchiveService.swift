@@ -18,6 +18,7 @@ public enum ArchiveServiceError: Error, LocalizedError, Equatable {
     case unsupportedFormat(ArchiveFormat)
     case unsupportedCreationFormat(ArchiveOutputFormat)
     case emptySelection
+    case selectionSpansMultipleDirectories
     case encryptionPasswordRequired
     case commandFailed(command: String, status: Int32, output: String)
     case couldNotParseArchive
@@ -34,6 +35,8 @@ public enum ArchiveServiceError: Error, LocalizedError, Equatable {
             return "\(format.displayName) 建立功能目前尚未支援。"
         case .emptySelection:
             return "請先選擇要壓縮的檔案或資料夾。"
+        case .selectionSpansMultipleDirectories:
+            return "選取項目位於不同資料夾，請開啟介面選擇輸出位置。"
         case .encryptionPasswordRequired:
             return "已啟用加密，請輸入密碼。"
         case .commandFailed(let command, let status, let output):
