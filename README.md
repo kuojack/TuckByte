@@ -6,7 +6,18 @@ TuckByte 是以 SwiftUI 開發的原生 macOS 壓縮工具。目前版本專注�
 
 > **開發階段：0.3.0**
 >
-> 目前提供本機測試與原始碼建置版本，尚未使用 Developer ID 簽章或 Apple notarization，不建議直接當作正式公開下載版本。
+> 目前提供開源測試版與原始碼建置版本。下載版尚未使用 Developer ID
+> 簽章或 Apple notarization，適合了解風險的技術使用者與測試者，不建議
+> 當作正式生產環境版本。
+
+## 下載測試版
+
+請從 [GitHub Releases](https://github.com/kuojack/TuckByte/releases) 下載
+`TuckByte.dmg`，並使用同一個 Release 提供的 SHA-256 檔案驗證下載內容。
+
+由於測試版尚未經 Apple 公證，macOS 可能阻擋第一次開啟。確認下載來源及
+SHA-256 後，可在 **系統設定 > 隱私權與安全性** 選擇「仍要打開」。請勿
+為了安裝 TuckByte 而停用整台 Mac 的 Gatekeeper。
 
 ## 功能
 
