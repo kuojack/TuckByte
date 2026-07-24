@@ -28,6 +28,7 @@
 		A60000000000000000000013 /* TuckByteFinderSync.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = A50000000000000000000017 /* TuckByteFinderSync.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, CodeSignOnCopy, ); }; };
 		A60000000000000000000014 /* ArchiveInPlaceCompressor.swift in Sources */ = {isa = PBXBuildFile; fileRef = A50000000000000000000018 /* ArchiveInPlaceCompressor.swift */; };
 		A60000000000000000000015 /* ZipDefaultApplicationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A50000000000000000000019 /* ZipDefaultApplicationService.swift */; };
+		A60000000000000000000016 /* ArchiveDirectoryBrowser.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5000000000000000000001A /* ArchiveDirectoryBrowser.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -77,6 +78,7 @@
 		A50000000000000000000017 /* TuckByteFinderSync.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = TuckByteFinderSync.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		A50000000000000000000018 /* ArchiveInPlaceCompressor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ArchiveInPlaceCompressor.swift; sourceTree = "<group>"; };
 		A50000000000000000000019 /* ZipDefaultApplicationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ZipDefaultApplicationService.swift; sourceTree = "<group>"; };
+		A5000000000000000000001A /* ArchiveDirectoryBrowser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ArchiveDirectoryBrowser.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -138,6 +140,7 @@
 			isa = PBXGroup;
 			children = (
 				A50000000000000000000001 /* ArchiveBatchExtractor.swift */,
+				A5000000000000000000001A /* ArchiveDirectoryBrowser.swift */,
 				A50000000000000000000018 /* ArchiveInPlaceCompressor.swift */,
 				A50000000000000000000002 /* ArchiveEntry.swift */,
 				A50000000000000000000003 /* ArchiveFormat.swift */,
@@ -314,6 +317,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				A60000000000000000000001 /* ArchiveBatchExtractor.swift in Sources */,
+				A60000000000000000000016 /* ArchiveDirectoryBrowser.swift in Sources */,
 				A60000000000000000000014 /* ArchiveInPlaceCompressor.swift in Sources */,
 				A60000000000000000000002 /* ArchiveEntry.swift in Sources */,
 				A60000000000000000000003 /* ArchiveFormat.swift in Sources */,

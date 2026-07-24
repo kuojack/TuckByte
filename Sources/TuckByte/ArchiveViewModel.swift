@@ -6,6 +6,7 @@ import UniformTypeIdentifiers
 final class ArchiveViewModel: ObservableObject {
     @Published var archiveURL: URL?
     @Published var entries: [ArchiveEntry] = []
+    @Published var currentArchiveDirectoryPath = ""
     @Published var pendingItems: [PendingArchiveItem] = []
     @Published var compressionLevel: Double = 6
     @Published var compressionSpeed: CompressionSpeed = .balanced {
@@ -38,6 +39,21 @@ final class ArchiveViewModel: ObservableObject {
 
     var hasArchiveLoaded: Bool {
         archiveURL != nil
+    }
+
+    var visibleEntries: [ArchiveEntry] {
+        ArchiveDirectoryBrowser.entries(
+            in: currentArchiveDirectoryPath,
+            from: entries
+        )
+    }
+
+    var archiveBreadcrumbs: [ArchiveBreadcrumb] {
+        ArchiveDirectoryBrowser.breadcrumbs(for: currentArchiveDirectoryPath)
+    }
+
+    var canNavigateUpArchiveDirectory: Bool {
+        !currentArchiveDirectoryPath.isEmpty
     }
 
     var canCreatePendingZip: Bool {
@@ -73,9 +89,33 @@ final class ArchiveViewModel: ObservableObject {
             DispatchQueue.main.async {
                 self.archiveURL = url
                 self.entries = loadedEntries
+                self.currentArchiveDirectoryPath = ""
                 self.statusMessage = "已讀取 \(loadedEntries.count) 個項目。"
             }
         }
+    }
+
+    func openArchiveDirectory(_ entry: ArchiveEntry) {
+        guard entry.isDirectory,
+              let directoryPath = ArchiveDirectoryBrowser.canonicalDirectoryPath(entry.path) else {
+            return
+        }
+        currentArchiveDirectoryPath = directoryPath
+        statusMessage = "正在瀏覽：\(directoryPath)"
+    }
+
+    func navigateToArchiveDirectory(_ directoryPath: String) {
+        guard let canonicalPath = ArchiveDirectoryBrowser.canonicalDirectoryPath(directoryPath) else {
+            return
+        }
+        currentArchiveDirectoryPath = canonicalPath
+        statusMessage = canonicalPath.isEmpty ? "正在瀏覽壓縮檔根目錄。" : "正在瀏覽：\(canonicalPath)"
+    }
+
+    func navigateUpArchiveDirectory() {
+        navigateToArchiveDirectory(
+            ArchiveDirectoryBrowser.parentPath(of: currentArchiveDirectoryPath)
+        )
     }
 
     func openDocumentURL(_ url: URL) {
@@ -290,6 +330,7 @@ final class ArchiveViewModel: ObservableObject {
     ) {
         archiveURL = nil
         entries = []
+        currentArchiveDirectoryPath = ""
         pendingItems = urls.map { PendingArchiveItem(url: $0) }
         errorMessage = nil
         statusMessage = customStatusMessage
@@ -419,6 +460,7 @@ final class ArchiveViewModel: ObservableObject {
         DispatchQueue.main.async {
             self.archiveURL = destinationURL
             self.entries = loadedEntries
+            self.currentArchiveDirectoryPath = ""
             self.statusMessage = "已建立 ZIP：\(destinationURL.path)"
         }
     }

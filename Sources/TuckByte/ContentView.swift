@@ -161,7 +161,7 @@ struct ContentView: View {
                 Text("內容")
                     .font(.headline)
                 Spacer()
-                Text("\(viewModel.entries.count) 個項目")
+                Text("\(viewModel.visibleEntries.count) 個項目")
                     .font(.caption)
                     .foregroundColor(.secondary)
             }
@@ -181,31 +181,104 @@ struct ContentView: View {
                     let visibility = EntryColumnVisibility(availableWidth: geometry.size.width)
 
                     VStack(spacing: 0) {
+                        archiveNavigationBar
+                        Divider()
                         entryHeader(visibility: visibility)
                         Divider()
-                        List(viewModel.entries) { entry in
-                            entryRow(entry, visibility: visibility)
-                                .padding(.vertical, 3)
-                                .onDrag {
-                                    viewModel.dragItemProvider(for: entry)
-                                }
-                                .contextMenu {
-                                    Button {
-                                        viewModel.extractEntry(entry)
-                                    } label: {
-                                        Label(
-                                            "解壓此項目...",
-                                            systemImage: "arrow.down.doc"
-                                        )
+                        if viewModel.visibleEntries.isEmpty {
+                            VStack(spacing: 8) {
+                                Image(systemName: "folder")
+                                    .font(.system(size: 36))
+                                    .foregroundColor(.secondary)
+                                Text("此資料夾是空的")
+                                    .foregroundColor(.secondary)
+                            }
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        } else {
+                            List(viewModel.visibleEntries) { entry in
+                                entryRow(entry, visibility: visibility)
+                                    .padding(.vertical, 3)
+                                    .contentShape(Rectangle())
+                                    .onTapGesture(count: 2) {
+                                        viewModel.openArchiveDirectory(entry)
                                     }
-                                    .disabled(viewModel.isWorking)
-                                }
-                                .help("拖到 Finder 可解壓此項目")
+                                    .onDrag {
+                                        viewModel.dragItemProvider(for: entry)
+                                    }
+                                    .contextMenu {
+                                        if entry.isDirectory {
+                                            Button {
+                                                viewModel.openArchiveDirectory(entry)
+                                            } label: {
+                                                Label("打開資料夾", systemImage: "folder")
+                                            }
+                                        }
+                                        Button {
+                                            viewModel.extractEntry(entry)
+                                        } label: {
+                                            Label(
+                                                "解壓此項目...",
+                                                systemImage: "arrow.down.doc"
+                                            )
+                                        }
+                                        .disabled(viewModel.isWorking)
+                                    }
+                                    .help(
+                                        entry.isDirectory
+                                            ? "雙擊進入資料夾；拖到 Finder 可解壓"
+                                            : "拖到 Finder 可解壓此項目"
+                                    )
+                            }
                         }
                     }
                 }
             }
         }
+    }
+
+    private var archiveNavigationBar: some View {
+        HStack(spacing: 8) {
+            Button(action: viewModel.navigateUpArchiveDirectory) {
+                Image(systemName: "chevron.left")
+            }
+            .buttonStyle(PlainButtonStyle())
+            .disabled(!viewModel.canNavigateUpArchiveDirectory)
+            .help("上一層")
+
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 6) {
+                    ForEach(Array(viewModel.archiveBreadcrumbs.enumerated()), id: \.element.id) {
+                        index,
+                        breadcrumb in
+                        if index > 0 {
+                            Image(systemName: "chevron.right")
+                                .font(.caption2)
+                                .foregroundColor(.secondary)
+                        }
+                        Button {
+                            viewModel.navigateToArchiveDirectory(breadcrumb.path)
+                        } label: {
+                            if index == 0 {
+                                Image(systemName: "archivebox")
+                            } else {
+                                Text(breadcrumb.name)
+                                    .lineLimit(1)
+                            }
+                        }
+                        .buttonStyle(PlainButtonStyle())
+                        .foregroundColor(
+                            breadcrumb.path == viewModel.currentArchiveDirectoryPath
+                                ? .primary
+                                : .accentColor
+                        )
+                        .help(index == 0 ? "壓縮檔根目錄" : breadcrumb.path)
+                    }
+                }
+            }
+        }
+        .font(.system(size: 13))
+        .frame(height: 34)
+        .padding(.horizontal, 12)
     }
 
     private func entryHeader(visibility: EntryColumnVisibility) -> some View {
@@ -239,10 +312,18 @@ struct ContentView: View {
                 Text(entry.typeDescription)
             }
             .frame(width: 56, alignment: .leading)
-            Text(entry.name)
-                .lineLimit(1)
-                .truncationMode(.middle)
-                .frame(maxWidth: .infinity, alignment: .leading)
+            HStack(spacing: 6) {
+                Text(entry.name)
+                    .lineLimit(1)
+                    .truncationMode(.middle)
+                if entry.isDirectory {
+                    Spacer(minLength: 0)
+                    Image(systemName: "chevron.right")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
             Text(entry.formattedSize)
                 .foregroundColor(.secondary)
                 .frame(width: 76, alignment: .trailing)
