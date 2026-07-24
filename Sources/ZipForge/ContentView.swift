@@ -10,12 +10,16 @@ struct ContentView: View {
             Divider()
             HStack(spacing: 0) {
                 compressionBrowser
-                    .frame(width: 330)
+                    .frame(width: 300)
+                    .layoutPriority(2)
                 Divider()
                 entryList
+                    .frame(minWidth: 0, maxWidth: .infinity)
+                    .layoutPriority(1)
                 Divider()
                 compressionOptions
-                    .frame(width: 280)
+                    .frame(width: 270)
+                    .layoutPriority(2)
             }
             Divider()
             statusBar
@@ -153,30 +157,38 @@ struct ContentView: View {
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
-                VStack(spacing: 0) {
-                    entryHeader
-                    Divider()
-                    List(viewModel.entries) { entry in
-                        entryRow(entry)
-                            .padding(.vertical, 3)
+                GeometryReader { geometry in
+                    let visibility = EntryColumnVisibility(availableWidth: geometry.size.width)
+
+                    VStack(spacing: 0) {
+                        entryHeader(visibility: visibility)
+                        Divider()
+                        List(viewModel.entries) { entry in
+                            entryRow(entry, visibility: visibility)
+                                .padding(.vertical, 3)
+                        }
                     }
                 }
             }
         }
     }
 
-    private var entryHeader: some View {
+    private func entryHeader(visibility: EntryColumnVisibility) -> some View {
         HStack(spacing: 12) {
             Text("類型")
                 .frame(width: 56, alignment: .leading)
             Text("名稱")
-                .frame(minWidth: 160, maxWidth: .infinity, alignment: .leading)
+                .frame(maxWidth: .infinity, alignment: .leading)
             Text("大小")
-                .frame(width: 90, alignment: .trailing)
-            Text("修改時間")
-                .frame(width: 150, alignment: .leading)
-            Text("路徑")
-                .frame(minWidth: 180, maxWidth: .infinity, alignment: .leading)
+                .frame(width: 76, alignment: .trailing)
+            if visibility.showsModifiedAt {
+                Text("修改時間")
+                    .frame(width: 132, alignment: .leading)
+            }
+            if visibility.showsPath {
+                Text("路徑")
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
         }
         .font(.caption.weight(.semibold))
         .foregroundColor(.secondary)
@@ -184,7 +196,7 @@ struct ContentView: View {
         .padding(.vertical, 8)
     }
 
-    private func entryRow(_ entry: ArchiveEntry) -> some View {
+    private func entryRow(_ entry: ArchiveEntry, visibility: EntryColumnVisibility) -> some View {
         HStack(spacing: 12) {
             HStack(spacing: 6) {
                 Image(systemName: entry.isDirectory ? "folder" : "doc")
@@ -194,18 +206,25 @@ struct ContentView: View {
             .frame(width: 56, alignment: .leading)
             Text(entry.name)
                 .lineLimit(1)
-                .frame(minWidth: 160, maxWidth: .infinity, alignment: .leading)
+                .truncationMode(.middle)
+                .frame(maxWidth: .infinity, alignment: .leading)
             Text(entry.formattedSize)
                 .foregroundColor(.secondary)
-                .frame(width: 90, alignment: .trailing)
-            Text(entry.formattedModifiedAt)
-                .foregroundColor(.secondary)
-                .frame(width: 150, alignment: .leading)
-            Text(entry.path)
-                .font(.caption)
-                .foregroundColor(.secondary)
-                .lineLimit(1)
-                .frame(minWidth: 180, maxWidth: .infinity, alignment: .leading)
+                .frame(width: 76, alignment: .trailing)
+            if visibility.showsModifiedAt {
+                Text(entry.formattedModifiedAt)
+                    .foregroundColor(.secondary)
+                    .lineLimit(1)
+                    .frame(width: 132, alignment: .leading)
+            }
+            if visibility.showsPath {
+                Text(entry.path)
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                    .lineLimit(1)
+                    .truncationMode(.middle)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
         }
         .font(.system(size: 13))
     }
@@ -322,4 +341,14 @@ struct ContentView: View {
 private struct AlertMessage: Identifiable {
     let id = UUID()
     let message: String
+}
+
+private struct EntryColumnVisibility {
+    let showsModifiedAt: Bool
+    let showsPath: Bool
+
+    init(availableWidth: CGFloat) {
+        showsModifiedAt = availableWidth >= 560
+        showsPath = availableWidth >= 780
+    }
 }
