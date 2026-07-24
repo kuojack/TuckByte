@@ -1,6 +1,6 @@
 # TuckByte
 
-![TuckByte icon](Resources/AppIcon.svg)
+![TuckByte icon](Resources/AppIcon.png)
 
 TuckByte 是以 SwiftUI 開發的原生 macOS 壓縮工具。目前版本專注於實用的 ZIP 工作流程，包含拖放檔案、瀏覽壓縮檔內容、調整壓縮率、傳統 ZIP 密碼保護，以及 Finder 右鍵整合。
 
