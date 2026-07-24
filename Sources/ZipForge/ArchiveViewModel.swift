@@ -12,7 +12,7 @@ final class ArchiveViewModel: ObservableObject {
             compressionLevel = Double(compressionSpeed.defaultCompressionLevel)
         }
     }
-    @Published var filenameEncoding: ArchiveFilenameEncoding = .utf8
+    @Published var outputFormat: ArchiveOutputFormat = .zip
     @Published var isEncryptionEnabled = false
     @Published var encryptionPassword = ""
     @Published var encryptionPasswordConfirmation = ""
@@ -148,6 +148,11 @@ final class ArchiveViewModel: ObservableObject {
             errorMessage = "請先把檔案或資料夾拖進待壓縮清單。"
             return
         }
+        guard outputFormat.isSupportedForCreation else {
+            errorMessage = "\(outputFormat.displayName) 建立功能下一版才會支援，目前請先選 ZIP。"
+            statusMessage = errorMessage ?? "操作失敗。"
+            return
+        }
         guard encryptionInputsAreValid else {
             errorMessage = "兩次輸入的密碼不一致。"
             statusMessage = errorMessage ?? "操作失敗。"
@@ -155,8 +160,8 @@ final class ArchiveViewModel: ObservableObject {
         }
 
         let savePanel = NSSavePanel()
-        savePanel.allowedFileTypes = ["zip"]
-        savePanel.nameFieldStringValue = "Archive.zip"
+        savePanel.allowedFileTypes = [outputFormat.fileExtension]
+        savePanel.nameFieldStringValue = "Archive.\(outputFormat.fileExtension)"
         guard savePanel.runModal() == .OK, let destinationURL = savePanel.url else { return }
 
         perform("正在以目前設定建立 \(destinationURL.lastPathComponent)...") {
@@ -218,8 +223,8 @@ final class ArchiveViewModel: ObservableObject {
         }
 
         return CompressionSettings(
+            outputFormat: outputFormat,
             compressionLevel: Int(compressionLevel.rounded()),
-            filenameEncoding: filenameEncoding,
             encryption: encryption
         )
     }

@@ -85,7 +85,7 @@ final class ShellArchiveServiceTests: XCTestCase {
         try "Fast".data(using: .utf8)!.write(to: sourceURL)
 
         let zipURL = tempDirectory.appendingPathComponent("Fast.zip")
-        let settings = CompressionSettings(compressionLevel: 1, filenameEncoding: .utf8, encryption: .none)
+        let settings = CompressionSettings(outputFormat: .zip, compressionLevel: 1, encryption: .none)
         try service.createZip(from: [sourceURL], destinationURL: zipURL, settings: settings)
 
         let entries = try service.inspect(archiveURL: zipURL)
@@ -97,10 +97,22 @@ final class ShellArchiveServiceTests: XCTestCase {
         try "Secret".data(using: .utf8)!.write(to: sourceURL)
 
         let zipURL = tempDirectory.appendingPathComponent("Secret.zip")
-        let settings = CompressionSettings(compressionLevel: 6, filenameEncoding: .utf8, encryption: .zipCrypto(password: ""))
+        let settings = CompressionSettings(outputFormat: .zip, compressionLevel: 6, encryption: .zipCrypto(password: ""))
 
         XCTAssertThrowsError(try service.createZip(from: [sourceURL], destinationURL: zipURL, settings: settings)) { error in
             XCTAssertEqual(error as? ArchiveServiceError, .encryptionPasswordRequired)
+        }
+    }
+
+    func testUnsupportedCreationFormatReturnsFriendlyError() throws {
+        let sourceURL = tempDirectory.appendingPathComponent("archive-me.txt")
+        try "Format".data(using: .utf8)!.write(to: sourceURL)
+
+        let destinationURL = tempDirectory.appendingPathComponent("Archive.7z")
+        let settings = CompressionSettings(outputFormat: .sevenZip, compressionLevel: 6, encryption: .none)
+
+        XCTAssertThrowsError(try service.createZip(from: [sourceURL], destinationURL: destinationURL, settings: settings)) { error in
+            XCTAssertEqual(error as? ArchiveServiceError, .unsupportedCreationFormat(.sevenZip))
         }
     }
 

@@ -7,7 +7,7 @@ ZipForge is an early macOS archive utility written in Swift. The first version f
 - SwiftUI macOS interface
 - Drag and drop archive selection
 - Drag and drop compression queue for files and folders
-- Compression settings panel with speed presets, compression level, filename encoding choice, and traditional ZIP password protection
+- Compression settings panel with format choice, speed presets, compression level, and traditional ZIP password protection
 - Zip inspection through `/usr/bin/zipinfo`
 - Zip extraction through `/usr/bin/ditto`
 - Zip creation through `/usr/bin/zip`
@@ -33,7 +33,7 @@ The packaging scripts create `dist/ZipForge.app` and `dist/ZipForge.dmg`. This f
 
 ![ZipForge icon](Resources/AppIcon.svg)
 
-The first compression settings implementation maps speed presets to standard ZIP compression levels and passes the selected level to `/usr/bin/zip`. Password protection uses traditional ZIP encryption through the system zip tool, not AES. Filename encoding is exposed in the product UI for workflow clarity, but the first engine still follows the system zip tool's filename handling.
+The first compression settings implementation maps speed presets to standard ZIP compression levels and passes the selected level to `/usr/bin/zip`. Password protection uses traditional ZIP encryption through the system zip tool, not AES. ZIP is the only creation format in this build; 7z, RAR, and TAR are product options reserved for the next archive engine.
 
 `swift test` and full SwiftPM builds require a complete Xcode installation because XCTest must be available. With Command Line Tools only, core source syntax can still be checked with `swiftc -parse Sources/ZipForgeCore/*.swift`.
 

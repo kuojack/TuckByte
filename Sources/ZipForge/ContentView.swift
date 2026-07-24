@@ -256,15 +256,15 @@ struct ContentView: View {
             }
 
             VStack(alignment: .leading, spacing: 8) {
-                Text("檔名編碼")
+                Text("格式")
                     .font(.caption.weight(.semibold))
                     .foregroundColor(.secondary)
-                Picker("", selection: $viewModel.filenameEncoding) {
-                    ForEach(ArchiveFilenameEncoding.allCases, id: \.self) { encoding in
-                        Text(encoding.displayName).tag(encoding)
+                Picker("", selection: $viewModel.outputFormat) {
+                    ForEach(ArchiveOutputFormat.allCases, id: \.self) { format in
+                        Text(format.displayName).tag(format)
                     }
                 }
-                Text("目前 ZIP 引擎以系統 zip 行為為準。")
+                Text(viewModel.outputFormat.isSupportedForCreation ? "目前可建立 ZIP。" : "這個格式下一版接 7z/libarchive 後支援。")
                     .font(.caption)
                     .foregroundColor(.secondary)
             }

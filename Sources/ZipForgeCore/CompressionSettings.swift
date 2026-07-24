@@ -1,36 +1,61 @@
 import Foundation
 
 public struct CompressionSettings: Equatable {
+    public var outputFormat: ArchiveOutputFormat
     public var compressionLevel: Int
-    public var filenameEncoding: ArchiveFilenameEncoding
     public var encryption: ArchiveEncryption
 
     public init(
+        outputFormat: ArchiveOutputFormat = .zip,
         compressionLevel: Int = 6,
-        filenameEncoding: ArchiveFilenameEncoding = .utf8,
         encryption: ArchiveEncryption = .none
     ) {
+        self.outputFormat = outputFormat
         self.compressionLevel = min(9, max(0, compressionLevel))
-        self.filenameEncoding = filenameEncoding
         self.encryption = encryption
     }
 
     public static let standard = CompressionSettings()
 }
 
-public enum ArchiveFilenameEncoding: String, CaseIterable, Equatable {
-    case utf8
-    case systemDefault
-    case traditionalChinese
+public enum ArchiveOutputFormat: String, CaseIterable, Equatable {
+    case zip
+    case sevenZip
+    case rar
+    case tar
 
     public var displayName: String {
         switch self {
-        case .utf8:
-            return "UTF-8"
-        case .systemDefault:
-            return "系統預設"
-        case .traditionalChinese:
-            return "繁體中文 Big5/CP950"
+        case .zip:
+            return "ZIP"
+        case .sevenZip:
+            return "7z"
+        case .rar:
+            return "RAR"
+        case .tar:
+            return "TAR"
+        }
+    }
+
+    public var fileExtension: String {
+        switch self {
+        case .zip:
+            return "zip"
+        case .sevenZip:
+            return "7z"
+        case .rar:
+            return "rar"
+        case .tar:
+            return "tar"
+        }
+    }
+
+    public var isSupportedForCreation: Bool {
+        switch self {
+        case .zip:
+            return true
+        case .sevenZip, .rar, .tar:
+            return false
         }
     }
 }

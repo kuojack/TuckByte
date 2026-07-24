@@ -40,6 +40,9 @@ public final class ShellArchiveService: ArchiveService {
     }
 
     public func createZip(from sourceURLs: [URL], destinationURL: URL, settings: CompressionSettings = .standard) throws {
+        guard settings.outputFormat.isSupportedForCreation else {
+            throw ArchiveServiceError.unsupportedCreationFormat(settings.outputFormat)
+        }
         if sourceURLs.isEmpty {
             throw ArchiveServiceError.emptySelection
         }

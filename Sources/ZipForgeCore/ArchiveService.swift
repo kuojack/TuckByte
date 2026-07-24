@@ -16,6 +16,7 @@ public enum ArchiveServiceError: Error, LocalizedError, Equatable {
     case fileDoesNotExist(URL)
     case destinationAlreadyExists(URL)
     case unsupportedFormat(ArchiveFormat)
+    case unsupportedCreationFormat(ArchiveOutputFormat)
     case emptySelection
     case encryptionPasswordRequired
     case commandFailed(command: String, status: Int32, output: String)
@@ -29,6 +30,8 @@ public enum ArchiveServiceError: Error, LocalizedError, Equatable {
             return "目的地已經存在，請換一個檔名或位置：\(url.path)"
         case .unsupportedFormat(let format):
             return "\(format.displayName) 格式初版尚未支援。"
+        case .unsupportedCreationFormat(let format):
+            return "\(format.displayName) 建立功能目前尚未支援。"
         case .emptySelection:
             return "請先選擇要壓縮的檔案或資料夾。"
         case .encryptionPasswordRequired:
