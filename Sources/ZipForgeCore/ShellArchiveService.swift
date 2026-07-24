@@ -4,6 +4,7 @@ public final class ShellArchiveService: ArchiveService {
     private let fileManager: FileManager
     private let zipPath = "/usr/bin/zip"
     private let zipInfoPath = "/usr/bin/zipinfo"
+    private let tarPath = "/usr/bin/tar"
     private let dittoPath = "/usr/bin/ditto"
 
     public init(fileManager: FileManager = .default) {
@@ -12,11 +13,24 @@ public final class ShellArchiveService: ArchiveService {
 
     public func inspect(archiveURL: URL) throws -> [ArchiveEntry] {
         try validateReadableArchive(archiveURL)
-        let result = try runExecutable(zipInfoPath, arguments: ["-l", "-T", archiveURL.path], currentDirectoryURL: nil)
-        let entries = result.output
+        let zipInfoResult = try runExecutable(zipInfoPath, arguments: ["-l", "-T", archiveURL.path], currentDirectoryURL: nil)
+        let metadataLines = zipInfoResult.output
             .split(whereSeparator: \.isNewline)
             .map(String.init)
-            .compactMap { Self.parseZipInfoLine($0) }
+            .filter(Self.isZipInfoEntryLine)
+        let pathResult = try runExecutable(tarPath, arguments: ["-tf", archiveURL.path], currentDirectoryURL: nil)
+        let paths = pathResult.output
+            .split(whereSeparator: \.isNewline)
+            .map(String.init)
+
+        guard metadataLines.count == paths.count else {
+            throw ArchiveServiceError.couldNotParseArchive
+        }
+
+        let entries = zip(metadataLines, paths)
+            .compactMap { metadataLine, path in
+                Self.parseZipInfoLine(metadataLine, archivePath: path)
+            }
             .sorted { lhs, rhs in
                 if lhs.isDirectory != rhs.isDirectory {
                     return lhs.isDirectory
@@ -99,6 +113,12 @@ public final class ShellArchiveService: ArchiveService {
         process.executableURL = URL(fileURLWithPath: executablePath)
         process.arguments = arguments
         process.currentDirectoryURL = currentDirectoryURL
+        process.environment = ProcessInfo.processInfo.environment.merging([
+            "LANG": "en_US.UTF-8",
+            "LC_ALL": "en_US.UTF-8"
+        ]) { _, utf8Locale in
+            utf8Locale
+        }
 
         let outputPipe = Pipe()
         process.standardOutput = outputPipe
@@ -108,7 +128,7 @@ public final class ShellArchiveService: ArchiveService {
         process.waitUntilExit()
 
         let data = outputPipe.fileHandleForReading.readDataToEndOfFile()
-        let output = String(data: data, encoding: .utf8) ?? ""
+        let output = String(decoding: data, as: UTF8.self)
         guard process.terminationStatus == 0 else {
             throw ArchiveServiceError.commandFailed(
                 command: URL(fileURLWithPath: executablePath).lastPathComponent,
@@ -119,9 +139,14 @@ public final class ShellArchiveService: ArchiveService {
         return CommandResult(output: output, status: process.terminationStatus)
     }
 
-    private static func parseZipInfoLine(_ line: String) -> ArchiveEntry? {
+    private static func isZipInfoEntryLine(_ line: String) -> Bool {
         let trimmedLine = line.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard trimmedLine.hasPrefix("-") || trimmedLine.hasPrefix("d") else {
+        return trimmedLine.hasPrefix("-") || trimmedLine.hasPrefix("d")
+    }
+
+    private static func parseZipInfoLine(_ line: String, archivePath: String) -> ArchiveEntry? {
+        let trimmedLine = line.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard isZipInfoEntryLine(trimmedLine) else {
             return nil
         }
 
@@ -132,7 +157,7 @@ public final class ShellArchiveService: ArchiveService {
         }
 
         let dateText = String(parts[7])
-        let path = parts[8...].joined(separator: " ")
+        let path = archivePath
         let isDirectory = trimmedLine.hasPrefix("d") || path.hasSuffix("/")
         let name = URL(fileURLWithPath: path).lastPathComponent
 

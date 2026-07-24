@@ -92,6 +92,24 @@ final class ShellArchiveServiceTests: XCTestCase {
         XCTAssertTrue(entries.contains { $0.path == "fast.txt" })
     }
 
+    func testPreservesUnicodeFilenameWhenCreatingInspectingAndExtracting() throws {
+        let filename = "index 可框選區域.html"
+        let sourceURL = tempDirectory.appendingPathComponent(filename)
+        try "Unicode filename".data(using: .utf8)!.write(to: sourceURL)
+
+        let zipURL = tempDirectory.appendingPathComponent("Unicode.zip")
+        try service.createZip(from: [sourceURL], destinationURL: zipURL)
+
+        let entries = try service.inspect(archiveURL: zipURL)
+        let entry = try XCTUnwrap(entries.first)
+        XCTAssertEqual(entry.name, filename)
+        XCTAssertEqual(entry.path, filename)
+
+        let destinationURL = tempDirectory.appendingPathComponent("UnicodeExtracted", isDirectory: true)
+        try service.extract(archiveURL: zipURL, destinationURL: destinationURL)
+        XCTAssertTrue(FileManager.default.fileExists(atPath: destinationURL.appendingPathComponent(filename).path))
+    }
+
     func testEncryptedZipRequiresPassword() throws {
         let sourceURL = tempDirectory.appendingPathComponent("secret.txt")
         try "Secret".data(using: .utf8)!.write(to: sourceURL)
