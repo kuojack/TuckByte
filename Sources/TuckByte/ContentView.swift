@@ -186,6 +186,21 @@ struct ContentView: View {
                         List(viewModel.entries) { entry in
                             entryRow(entry, visibility: visibility)
                                 .padding(.vertical, 3)
+                                .onDrag {
+                                    viewModel.dragItemProvider(for: entry)
+                                }
+                                .contextMenu {
+                                    Button {
+                                        viewModel.extractEntry(entry)
+                                    } label: {
+                                        Label(
+                                            "解壓此項目...",
+                                            systemImage: "arrow.down.doc"
+                                        )
+                                    }
+                                    .disabled(viewModel.isWorking)
+                                }
+                                .help("拖到 Finder 可解壓此項目")
                         }
                     }
                 }

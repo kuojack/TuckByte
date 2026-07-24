@@ -110,6 +110,130 @@ final class ShellArchiveServiceTests: XCTestCase {
         XCTAssertTrue(FileManager.default.fileExists(atPath: destinationURL.appendingPathComponent(filename).path))
     }
 
+    func testExtractsOneNestedEntryToChosenDestination() throws {
+        let sourceDirectory = tempDirectory
+            .appendingPathComponent("資料夾", isDirectory: true)
+        try FileManager.default.createDirectory(
+            at: sourceDirectory,
+            withIntermediateDirectories: true,
+            attributes: nil
+        )
+        let sourceURL = sourceDirectory.appendingPathComponent("單獨取出.txt")
+        try "Only this entry".data(using: .utf8)!.write(to: sourceURL)
+
+        let zipURL = tempDirectory.appendingPathComponent("Entries.zip")
+        try service.createZip(
+            from: [sourceDirectory],
+            destinationURL: zipURL
+        )
+        let entries = try service.inspect(archiveURL: zipURL)
+        let entry = try XCTUnwrap(
+            entries.first { $0.path == "資料夾/單獨取出.txt" }
+        )
+        let destinationURL = tempDirectory
+            .appendingPathComponent("拉出的檔案.txt")
+
+        try service.extractEntry(
+            archiveURL: zipURL,
+            entry: entry,
+            destinationURL: destinationURL
+        )
+
+        XCTAssertEqual(
+            try String(contentsOf: destinationURL),
+            "Only this entry"
+        )
+    }
+
+    func testExtractsOneDirectoryWithItsContents() throws {
+        let sourceDirectory = tempDirectory
+            .appendingPathComponent("Project", isDirectory: true)
+        try FileManager.default.createDirectory(
+            at: sourceDirectory,
+            withIntermediateDirectories: true,
+            attributes: nil
+        )
+        try "Folder content".data(using: .utf8)!.write(
+            to: sourceDirectory.appendingPathComponent("readme.txt")
+        )
+
+        let zipURL = tempDirectory.appendingPathComponent("Directory.zip")
+        try service.createZip(
+            from: [sourceDirectory],
+            destinationURL: zipURL
+        )
+        let entries = try service.inspect(archiveURL: zipURL)
+        let directoryEntry = try XCTUnwrap(
+            entries.first { $0.path == "Project/" }
+        )
+        let destinationURL = tempDirectory
+            .appendingPathComponent("Dragged Project", isDirectory: true)
+
+        try service.extractEntry(
+            archiveURL: zipURL,
+            entry: directoryEntry,
+            destinationURL: destinationURL
+        )
+
+        XCTAssertEqual(
+            try String(
+                contentsOf: destinationURL
+                    .appendingPathComponent("readme.txt")
+            ),
+            "Folder content"
+        )
+    }
+
+    func testExtractEntryRefusesToOverwriteDestination() throws {
+        let destinationURL = tempDirectory.appendingPathComponent("Exists.txt")
+        try Data().write(to: destinationURL)
+        let entry = ArchiveEntry(
+            name: "Exists.txt",
+            path: "Exists.txt",
+            size: 0,
+            isDirectory: false,
+            modifiedAt: nil
+        )
+
+        XCTAssertThrowsError(
+            try service.extractEntry(
+                archiveURL: tempDirectory.appendingPathComponent("Unused.zip"),
+                entry: entry,
+                destinationURL: destinationURL
+            )
+        ) { error in
+            XCTAssertEqual(
+                error as? ArchiveServiceError,
+                .destinationAlreadyExists(destinationURL)
+            )
+        }
+    }
+
+    func testRejectsUnsafeEntryPathBeforeExtraction() throws {
+        let archiveURL = tempDirectory.appendingPathComponent("Unused.zip")
+        let destinationURL = tempDirectory.appendingPathComponent("escaped.txt")
+        let unsafeEntry = ArchiveEntry(
+            name: "escaped.txt",
+            path: "../escaped.txt",
+            size: 1,
+            isDirectory: false,
+            modifiedAt: nil
+        )
+
+        XCTAssertThrowsError(
+            try service.extractEntry(
+                archiveURL: archiveURL,
+                entry: unsafeEntry,
+                destinationURL: destinationURL
+            )
+        ) { error in
+            XCTAssertEqual(
+                error as? ArchiveServiceError,
+                .unsafeArchiveEntry("../escaped.txt")
+            )
+        }
+    }
+
     func testWrapsExistingArchiveInAnotherZip() throws {
         let sourceFileURL = tempDirectory.appendingPathComponent("內容.txt")
         try "Nested by TuckByte".data(using: .utf8)!.write(to: sourceFileURL)

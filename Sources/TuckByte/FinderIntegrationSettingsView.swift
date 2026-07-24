@@ -6,15 +6,62 @@ import UserNotifications
 final class FinderIntegrationSettingsModel: ObservableObject {
     @Published var isExtensionEnabled = false
     @Published var notificationStatus = "尚未確認"
+    @Published var isZipBrowsingEnabled = false
+    @Published var isUpdatingZipBrowsing = false
+    @Published var zipBrowsingStatus = "尚未確認"
 
     private let notificationService = FinderNotificationService()
+    private let zipDefaultApplicationService =
+        ZipDefaultApplicationService()
+
+    var canChangeZipBrowsing: Bool {
+        zipDefaultApplicationService.canChangeDefaultApplication
+    }
 
     func refresh() {
         isExtensionEnabled = FIFinderSyncController.isExtensionEnabled
+        refreshZipBrowsingStatus()
         notificationService.authorizationStatus { [weak self] status in
             DispatchQueue.main.async {
                 self?.notificationStatus = Self.description(for: status)
             }
+        }
+    }
+
+    func setZipBrowsingEnabled(_ enabled: Bool) {
+        isUpdatingZipBrowsing = true
+        zipBrowsingStatus = "正在更新 ZIP 預設開啟方式..."
+        zipDefaultApplicationService.setEnabled(enabled) { [weak self] error in
+            DispatchQueue.main.async {
+                guard let self = self else { return }
+                self.isUpdatingZipBrowsing = false
+                if let error = error {
+                    self.zipBrowsingStatus =
+                        (error as? LocalizedError)?.errorDescription
+                        ?? error.localizedDescription
+                }
+                self.refreshZipBrowsingStatus(
+                    preservingError: error != nil
+                )
+            }
+        }
+    }
+
+    private func refreshZipBrowsingStatus(
+        preservingError: Bool = false
+    ) {
+        isZipBrowsingEnabled =
+            zipDefaultApplicationService.isTuckByteDefaultApplication
+        guard !preservingError else { return }
+
+        if isZipBrowsingEnabled {
+            zipBrowsingStatus = "雙擊 ZIP 時會使用 TuckByte 瀏覽內容。"
+        } else if zipDefaultApplicationService.canChangeDefaultApplication {
+            zipBrowsingStatus =
+                "目前由 \(zipDefaultApplicationService.currentDefaultApplicationName) 開啟 ZIP。"
+        } else {
+            zipBrowsingStatus =
+                "請使用打包後的 TuckByte.app 設定此功能。"
         }
     }
 
@@ -49,6 +96,25 @@ struct FinderIntegrationSettingsView: View {
 
     var body: some View {
         Form {
+            VStack(alignment: .leading, spacing: 6) {
+                Toggle(
+                    "雙擊 ZIP 時先用 TuckByte 瀏覽",
+                    isOn: Binding(
+                        get: { model.isZipBrowsingEnabled },
+                        set: model.setZipBrowsingEnabled
+                    )
+                )
+                .disabled(
+                    model.isUpdatingZipBrowsing
+                    || !model.canChangeZipBrowsing
+                )
+                Text(model.zipBrowsingStatus)
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
+
+            Divider()
+
             HStack {
                 Label("Finder 右鍵選單", systemImage: "folder.badge.gearshape")
                 Spacer()

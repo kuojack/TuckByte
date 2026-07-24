@@ -1,6 +1,7 @@
 import AppKit
 import Foundation
 import TuckByteCore
+import UniformTypeIdentifiers
 
 final class ArchiveViewModel: ObservableObject {
     @Published var archiveURL: URL?
@@ -77,6 +78,20 @@ final class ArchiveViewModel: ObservableObject {
         }
     }
 
+    func openDocumentURL(_ url: URL) {
+        guard url.isFileURL else { return }
+        guard ArchiveFormat(fileURL: url) == .zip else {
+            errorMessage = "目前只能瀏覽 ZIP 壓縮檔。"
+            statusMessage = errorMessage ?? "操作失敗。"
+            return
+        }
+        loadArchive(url)
+        NSApplication.shared.activate(ignoringOtherApps: true)
+        NSApplication.shared.windows
+            .first(where: { $0.canBecomeKey })?
+            .makeKeyAndOrderFront(nil)
+    }
+
     func extractSelectedArchive() {
         guard let archiveURL = archiveURL else {
             errorMessage = "請先開啟一個 ZIP 壓縮檔。"
@@ -99,6 +114,120 @@ final class ArchiveViewModel: ObservableObject {
                 self.statusMessage = "解壓完成：\(destinationURL.path)"
             }
         }
+    }
+
+    func extractEntry(_ entry: ArchiveEntry) {
+        guard let archiveURL = archiveURL else {
+            errorMessage = "請先開啟一個 ZIP 壓縮檔。"
+            return
+        }
+
+        let destinationURL: URL?
+        if entry.isDirectory {
+            let panel = NSOpenPanel()
+            panel.canChooseFiles = false
+            panel.canChooseDirectories = true
+            panel.canCreateDirectories = true
+            panel.allowsMultipleSelection = false
+            panel.prompt = "解壓至此"
+            guard panel.runModal() == .OK, let folderURL = panel.url else {
+                return
+            }
+            destinationURL = folderURL.appendingPathComponent(
+                entry.name,
+                isDirectory: true
+            )
+        } else {
+            let panel = NSSavePanel()
+            panel.nameFieldStringValue = entry.name
+            panel.prompt = "解壓"
+            guard panel.runModal() == .OK else { return }
+            destinationURL = panel.url
+        }
+
+        guard let destinationURL = destinationURL else { return }
+        perform("正在解壓 \(entry.name)...") {
+            try self.archiveService.extractEntry(
+                archiveURL: archiveURL,
+                entry: entry,
+                destinationURL: destinationURL
+            )
+            DispatchQueue.main.async {
+                self.statusMessage = "已解壓：\(destinationURL.path)"
+            }
+        }
+    }
+
+    func dragItemProvider(for entry: ArchiveEntry) -> NSItemProvider {
+        let provider = NSItemProvider()
+        provider.suggestedName = entry.name
+        guard let archiveURL = archiveURL else { return provider }
+
+        let typeIdentifier: String
+        if entry.isDirectory {
+            typeIdentifier = UTType.folder.identifier
+        } else {
+            typeIdentifier =
+                UTType(filenameExtension:
+                    URL(fileURLWithPath: entry.name).pathExtension
+                )?.identifier
+                ?? UTType.data.identifier
+        }
+
+        provider.registerFileRepresentation(
+            forTypeIdentifier: typeIdentifier,
+            fileOptions: [],
+            visibility: .all
+        ) { [weak self] completion in
+            let progress = Progress(totalUnitCount: 100)
+            guard let self = self else {
+                completion(nil, false, CocoaError(.fileNoSuchFile))
+                return progress
+            }
+
+            DispatchQueue.global(qos: .userInitiated).async {
+                let temporaryRoot = FileManager.default.temporaryDirectory
+                    .appendingPathComponent(
+                        "TuckByte-Drag-\(UUID().uuidString)",
+                        isDirectory: true
+                    )
+                let destinationURL = temporaryRoot.appendingPathComponent(
+                    entry.name,
+                    isDirectory: entry.isDirectory
+                )
+
+                do {
+                    try FileManager.default.createDirectory(
+                        at: temporaryRoot,
+                        withIntermediateDirectories: true,
+                        attributes: nil
+                    )
+                    try self.archiveService.extractEntry(
+                        archiveURL: archiveURL,
+                        entry: entry,
+                        destinationURL: destinationURL
+                    )
+                    progress.completedUnitCount = 100
+                    completion(destinationURL, false, nil)
+                    DispatchQueue.main.async {
+                        self.statusMessage = "已準備拖出：\(entry.name)"
+                    }
+                    Self.removeDragTemporaryDirectoryLater(temporaryRoot)
+                } catch {
+                    try? FileManager.default.removeItem(at: temporaryRoot)
+                    completion(nil, false, error)
+                    DispatchQueue.main.async {
+                        self.errorMessage =
+                            (error as? LocalizedError)?.errorDescription
+                            ?? error.localizedDescription
+                        self.statusMessage =
+                            self.errorMessage ?? "無法拖出壓縮項目。"
+                    }
+                }
+            }
+            return progress
+        }
+        return provider
     }
 
     func createZipPanel() {
@@ -351,6 +480,14 @@ final class ArchiveViewModel: ObservableObject {
                     self.statusMessage = self.errorMessage ?? "操作失敗。"
                 }
             }
+        }
+    }
+
+    private static func removeDragTemporaryDirectoryLater(_ url: URL) {
+        DispatchQueue.global(qos: .utility).asyncAfter(
+            deadline: .now() + 600
+        ) {
+            try? FileManager.default.removeItem(at: url)
         }
     }
 }

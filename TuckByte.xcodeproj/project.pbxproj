@@ -27,6 +27,7 @@
 		A60000000000000000000012 /* libTuckByteIntegration.a in Frameworks */ = {isa = PBXBuildFile; fileRef = A50000000000000000000015 /* libTuckByteIntegration.a */; };
 		A60000000000000000000013 /* TuckByteFinderSync.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = A50000000000000000000017 /* TuckByteFinderSync.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, CodeSignOnCopy, ); }; };
 		A60000000000000000000014 /* ArchiveInPlaceCompressor.swift in Sources */ = {isa = PBXBuildFile; fileRef = A50000000000000000000018 /* ArchiveInPlaceCompressor.swift */; };
+		A60000000000000000000015 /* ZipDefaultApplicationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A50000000000000000000019 /* ZipDefaultApplicationService.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -75,6 +76,7 @@
 		A50000000000000000000016 /* TuckByte.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = TuckByte.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		A50000000000000000000017 /* TuckByteFinderSync.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = TuckByteFinderSync.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		A50000000000000000000018 /* ArchiveInPlaceCompressor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ArchiveInPlaceCompressor.swift; sourceTree = "<group>"; };
+		A50000000000000000000019 /* ZipDefaultApplicationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ZipDefaultApplicationService.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -163,6 +165,7 @@
 				A5000000000000000000000B /* FinderIntegrationSettingsView.swift */,
 				A5000000000000000000000C /* FinderNotificationService.swift */,
 				A5000000000000000000000D /* TuckByteApp.swift */,
+				A50000000000000000000019 /* ZipDefaultApplicationService.swift */,
 				A5000000000000000000000E /* main.swift */,
 			);
 			path = TuckByte;
@@ -338,6 +341,7 @@
 				A6000000000000000000000B /* FinderIntegrationSettingsView.swift in Sources */,
 				A6000000000000000000000C /* FinderNotificationService.swift in Sources */,
 				A6000000000000000000000D /* TuckByteApp.swift in Sources */,
+				A60000000000000000000015 /* ZipDefaultApplicationService.swift in Sources */,
 				A6000000000000000000000E /* main.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -440,7 +444,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MARKETING_VERSION = 0.4.0;
+				MARKETING_VERSION = 0.5.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.kuojack.TuckByte;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
@@ -460,7 +464,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MARKETING_VERSION = 0.4.0;
+				MARKETING_VERSION = 0.5.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.kuojack.TuckByte;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
@@ -482,7 +486,7 @@
 					"@executable_path/../Frameworks",
 					"@executable_path/../../../../Frameworks",
 				);
-				MARKETING_VERSION = 0.4.0;
+				MARKETING_VERSION = 0.5.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.kuojack.TuckByte.FinderSync;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
@@ -505,7 +509,7 @@
 					"@executable_path/../Frameworks",
 					"@executable_path/../../../../Frameworks",
 				);
-				MARKETING_VERSION = 0.4.0;
+				MARKETING_VERSION = 0.5.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.kuojack.TuckByte.FinderSync;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;

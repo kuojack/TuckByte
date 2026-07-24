@@ -21,7 +21,13 @@ struct TuckByteApp: App {
                     minHeight: 600,
                     idealHeight: 720
                 )
-                .onOpenURL(perform: finderActionRouter.handle)
+                .onOpenURL { url in
+                    if url.isFileURL {
+                        viewModel.openDocumentURL(url)
+                    } else {
+                        finderActionRouter.handle(url: url)
+                    }
+                }
         }
         .commands {
             CommandGroup(replacing: .newItem) { }
