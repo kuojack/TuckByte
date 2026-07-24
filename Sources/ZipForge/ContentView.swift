@@ -9,10 +9,13 @@ struct ContentView: View {
             toolbar
             Divider()
             HStack(spacing: 0) {
-                dropZone
-                    .frame(width: 300)
+                compressionBrowser
+                    .frame(width: 330)
                 Divider()
                 entryList
+                Divider()
+                compressionOptions
+                    .frame(width: 280)
             }
             Divider()
             statusBar
@@ -41,6 +44,10 @@ struct ContentView: View {
                 Label("建立 ZIP", systemImage: "archivebox")
             }
             .disabled(viewModel.isWorking)
+            Button(action: viewModel.createZipFromPendingItems) {
+                Label("壓縮清單", systemImage: "tray.and.arrow.down")
+            }
+            .disabled(!viewModel.canCreatePendingZip)
             Spacer()
             if viewModel.isWorking {
                 ProgressView()
@@ -50,30 +57,77 @@ struct ContentView: View {
         .padding(12)
     }
 
-    private var dropZone: some View {
-        VStack(spacing: 16) {
-            Image(systemName: "archivebox")
-                .font(.system(size: 48, weight: .regular))
-                .foregroundColor(.accentColor)
-            Text(viewModel.archiveName)
-                .font(.headline)
-                .multilineTextAlignment(.center)
-                .lineLimit(3)
-            Text(viewModel.selectedFormatDescription)
-                .font(.caption)
-                .foregroundColor(.secondary)
-            Text("拖放 ZIP 檔到這裡")
-                .font(.subheadline)
-                .foregroundColor(.secondary)
-            Text("拖入檔案或資料夾可建立 ZIP")
-                .font(.caption)
-                .foregroundColor(.secondary)
+    private var compressionBrowser: some View {
+        VStack(spacing: 0) {
+            HStack {
+                Text("待壓縮")
+                    .font(.headline)
+                Spacer()
+                Button(action: viewModel.addPendingItemsPanel) {
+                    Image(systemName: "plus")
+                }
+                .buttonStyle(PlainButtonStyle())
+                Button(action: viewModel.clearPendingItems) {
+                    Image(systemName: "trash")
+                }
+                .buttonStyle(PlainButtonStyle())
+                .disabled(viewModel.pendingItems.isEmpty)
+            }
+            .padding(12)
+            Divider()
+            VStack(spacing: 10) {
+                Image(systemName: "square.and.arrow.down.on.square")
+                    .font(.system(size: 38, weight: .regular))
+                    .foregroundColor(.accentColor)
+                Text("把檔案或資料夾拖進來")
+                    .font(.headline)
+                    .multilineTextAlignment(.center)
+                Text("也可以拖入 ZIP 直接瀏覽內容")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 18)
+            .background(Color(NSColor.controlBackgroundColor))
+            .onDrop(of: ["public.file-url"], isTargeted: nil) { providers in
+                loadDroppedURLs(providers: providers)
+            }
+            Divider()
+            if viewModel.pendingItems.isEmpty {
+                VStack(spacing: 8) {
+                    Image(systemName: "tray")
+                        .font(.system(size: 32))
+                        .foregroundColor(.secondary)
+                    Text("清單目前是空的")
+                        .foregroundColor(.secondary)
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            } else {
+                List {
+                    ForEach(viewModel.pendingItems) { item in
+                        pendingItemRow(item)
+                    }
+                    .onDelete(perform: viewModel.removePendingItems)
+                }
+            }
         }
-        .padding(20)
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(Color(NSColor.controlBackgroundColor))
-        .onDrop(of: ["public.file-url"], isTargeted: nil) { providers in
-            loadDroppedURLs(providers: providers)
+    }
+
+    private func pendingItemRow(_ item: PendingArchiveItem) -> some View {
+        HStack(spacing: 8) {
+            Image(systemName: item.isDirectory ? "folder" : "doc")
+                .foregroundColor(item.isDirectory ? .accentColor : .secondary)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(item.name)
+                    .lineLimit(1)
+                Text(item.typeDescription)
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                Text(item.path)
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                    .lineLimit(1)
+            }
         }
     }
 
@@ -166,6 +220,76 @@ struct ContentView: View {
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 8)
+    }
+
+    private var compressionOptions: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text("壓縮設定")
+                .font(.headline)
+
+            VStack(alignment: .leading, spacing: 8) {
+                Text("速度")
+                    .font(.caption.weight(.semibold))
+                    .foregroundColor(.secondary)
+                Picker("", selection: $viewModel.compressionSpeed) {
+                    ForEach(CompressionSpeed.allCases) { speed in
+                        Text(speed.displayName).tag(speed)
+                    }
+                }
+                .pickerStyle(SegmentedPickerStyle())
+            }
+
+            VStack(alignment: .leading, spacing: 8) {
+                HStack {
+                    Text("壓縮率")
+                        .font(.caption.weight(.semibold))
+                        .foregroundColor(.secondary)
+                    Spacer()
+                    Text("\(Int(viewModel.compressionLevel.rounded())) / 9")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+                Slider(value: $viewModel.compressionLevel, in: 0...9, step: 1)
+                Text("0 最快但較大，9 最小但較慢。")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
+
+            VStack(alignment: .leading, spacing: 8) {
+                Text("檔名編碼")
+                    .font(.caption.weight(.semibold))
+                    .foregroundColor(.secondary)
+                Picker("", selection: $viewModel.filenameEncoding) {
+                    ForEach(ArchiveFilenameEncoding.allCases, id: \.self) { encoding in
+                        Text(encoding.displayName).tag(encoding)
+                    }
+                }
+                Text("目前 ZIP 引擎以系統 zip 行為為準。")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
+
+            VStack(alignment: .leading, spacing: 8) {
+                Toggle("啟用傳統 ZIP 加密", isOn: $viewModel.isEncryptionEnabled)
+                SecureField("密碼", text: $viewModel.encryptionPassword)
+                    .disabled(!viewModel.isEncryptionEnabled)
+                SecureField("再次輸入密碼", text: $viewModel.encryptionPasswordConfirmation)
+                    .disabled(!viewModel.isEncryptionEnabled)
+                Text("初版使用系統 zip 的傳統密碼保護，不是 AES。")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
+
+            Spacer()
+
+            Button(action: viewModel.createZipFromPendingItems) {
+                Label("建立壓縮檔", systemImage: "archivebox.fill")
+                    .frame(maxWidth: .infinity)
+            }
+            .disabled(!viewModel.canCreatePendingZip)
+            .controlSize(.large)
+        }
+        .padding(14)
     }
 
     private func loadDroppedURLs(providers: [NSItemProvider]) -> Bool {

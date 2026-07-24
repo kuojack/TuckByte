@@ -80,6 +80,30 @@ final class ShellArchiveServiceTests: XCTestCase {
         XCTAssertEqual(try String(contentsOf: destinationURL.appendingPathComponent("two.txt")), "Two")
     }
 
+    func testCreateZipUsesCompressionSettings() throws {
+        let sourceURL = tempDirectory.appendingPathComponent("fast.txt")
+        try "Fast".data(using: .utf8)!.write(to: sourceURL)
+
+        let zipURL = tempDirectory.appendingPathComponent("Fast.zip")
+        let settings = CompressionSettings(compressionLevel: 1, filenameEncoding: .utf8, encryption: .none)
+        try service.createZip(from: [sourceURL], destinationURL: zipURL, settings: settings)
+
+        let entries = try service.inspect(archiveURL: zipURL)
+        XCTAssertTrue(entries.contains { $0.path == "fast.txt" })
+    }
+
+    func testEncryptedZipRequiresPassword() throws {
+        let sourceURL = tempDirectory.appendingPathComponent("secret.txt")
+        try "Secret".data(using: .utf8)!.write(to: sourceURL)
+
+        let zipURL = tempDirectory.appendingPathComponent("Secret.zip")
+        let settings = CompressionSettings(compressionLevel: 6, filenameEncoding: .utf8, encryption: .zipCrypto(password: ""))
+
+        XCTAssertThrowsError(try service.createZip(from: [sourceURL], destinationURL: zipURL, settings: settings)) { error in
+            XCTAssertEqual(error as? ArchiveServiceError, .encryptionPasswordRequired)
+        }
+    }
+
     func testRefusesToOverwriteExistingDestination() throws {
         let sourceURL = tempDirectory.appendingPathComponent("hello.txt")
         try "Hello".data(using: .utf8)!.write(to: sourceURL)

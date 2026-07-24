@@ -5,6 +5,17 @@ import ZipForgeCore
 final class ArchiveViewModel: ObservableObject {
     @Published var archiveURL: URL?
     @Published var entries: [ArchiveEntry] = []
+    @Published var pendingItems: [PendingArchiveItem] = []
+    @Published var compressionLevel: Double = 6
+    @Published var compressionSpeed: CompressionSpeed = .balanced {
+        didSet {
+            compressionLevel = Double(compressionSpeed.defaultCompressionLevel)
+        }
+    }
+    @Published var filenameEncoding: ArchiveFilenameEncoding = .utf8
+    @Published var isEncryptionEnabled = false
+    @Published var encryptionPassword = ""
+    @Published var encryptionPasswordConfirmation = ""
     @Published var statusMessage = "拖放 ZIP 檔或使用工具列開始。"
     @Published var errorMessage: String?
     @Published var isWorking = false
@@ -26,6 +37,10 @@ final class ArchiveViewModel: ObservableObject {
 
     var hasArchiveLoaded: Bool {
         archiveURL != nil
+    }
+
+    var canCreatePendingZip: Bool {
+        !pendingItems.isEmpty && !isWorking
     }
 
     func openArchivePanel() {
@@ -92,6 +107,63 @@ final class ArchiveViewModel: ObservableObject {
         }
     }
 
+    func addPendingItemsPanel() {
+        let panel = NSOpenPanel()
+        panel.canChooseFiles = true
+        panel.canChooseDirectories = true
+        panel.allowsMultipleSelection = true
+        panel.prompt = "加入"
+        if panel.runModal() == .OK {
+            addPendingItems(panel.urls)
+        }
+    }
+
+    func addPendingItems(_ urls: [URL]) {
+        let newItems = urls
+            .filter { url in
+                !pendingItems.contains { $0.url == url }
+            }
+            .map { PendingArchiveItem(url: $0) }
+
+        guard !newItems.isEmpty else {
+            statusMessage = "檔案已在待壓縮清單中。"
+            return
+        }
+        pendingItems.append(contentsOf: newItems)
+        statusMessage = "已加入 \(newItems.count) 個項目到待壓縮清單。"
+    }
+
+    func removePendingItems(at offsets: IndexSet) {
+        pendingItems.remove(atOffsets: offsets)
+        statusMessage = pendingItems.isEmpty ? "待壓縮清單已清空。" : "已移除項目。"
+    }
+
+    func clearPendingItems() {
+        pendingItems.removeAll()
+        statusMessage = "待壓縮清單已清空。"
+    }
+
+    func createZipFromPendingItems() {
+        guard !pendingItems.isEmpty else {
+            errorMessage = "請先把檔案或資料夾拖進待壓縮清單。"
+            return
+        }
+        guard encryptionInputsAreValid else {
+            errorMessage = "兩次輸入的密碼不一致。"
+            statusMessage = errorMessage ?? "操作失敗。"
+            return
+        }
+
+        let savePanel = NSSavePanel()
+        savePanel.allowedFileTypes = ["zip"]
+        savePanel.nameFieldStringValue = "Archive.zip"
+        guard savePanel.runModal() == .OK, let destinationURL = savePanel.url else { return }
+
+        perform("正在以目前設定建立 \(destinationURL.lastPathComponent)...") {
+            try self.createZip(from: self.pendingItems.map { $0.url }, destinationURL: destinationURL)
+        }
+    }
+
     func createZipFromDroppedItems(_ urls: [URL]) {
         guard !urls.isEmpty else { return }
         let savePanel = NSSavePanel()
@@ -113,15 +185,15 @@ final class ArchiveViewModel: ObservableObject {
             if format == .sevenZip || format == .rar || format == .tar || format == .gzip {
                 loadArchive(urls[0])
             } else {
-                createZipFromDroppedItems(urls)
+                addPendingItems(urls)
             }
         } else {
-            createZipFromDroppedItems(urls)
+            addPendingItems(urls)
         }
     }
 
     private func createZip(from sourceURLs: [URL], destinationURL: URL) throws {
-        try self.archiveService.createZip(from: sourceURLs, destinationURL: destinationURL)
+        try self.archiveService.createZip(from: sourceURLs, destinationURL: destinationURL, settings: currentCompressionSettings)
         let loadedEntries = try self.archiveService.inspect(archiveURL: destinationURL)
         DispatchQueue.main.async {
             self.archiveURL = destinationURL
@@ -135,6 +207,25 @@ final class ArchiveViewModel: ObservableObject {
             return "\(urls[0].deletingPathExtension().lastPathComponent).zip"
         }
         return "Archive.zip"
+    }
+
+    private var currentCompressionSettings: CompressionSettings {
+        let encryption: ArchiveEncryption
+        if isEncryptionEnabled {
+            encryption = .zipCrypto(password: encryptionPassword)
+        } else {
+            encryption = .none
+        }
+
+        return CompressionSettings(
+            compressionLevel: Int(compressionLevel.rounded()),
+            filenameEncoding: filenameEncoding,
+            encryption: encryption
+        )
+    }
+
+    private var encryptionInputsAreValid: Bool {
+        !isEncryptionEnabled || encryptionPassword == encryptionPasswordConfirmation
     }
 
     private func perform(_ message: String, work: @escaping () throws -> Void) {
@@ -154,6 +245,61 @@ final class ArchiveViewModel: ObservableObject {
                     self.statusMessage = self.errorMessage ?? "操作失敗。"
                 }
             }
+        }
+    }
+}
+
+struct PendingArchiveItem: Identifiable, Equatable {
+    let id = UUID()
+    let url: URL
+
+    var name: String {
+        url.lastPathComponent
+    }
+
+    var path: String {
+        url.path
+    }
+
+    var isDirectory: Bool {
+        var isDirectory: ObjCBool = false
+        FileManager.default.fileExists(atPath: url.path, isDirectory: &isDirectory)
+        return isDirectory.boolValue
+    }
+
+    var typeDescription: String {
+        isDirectory ? "資料夾" : "檔案"
+    }
+}
+
+enum CompressionSpeed: String, CaseIterable, Identifiable {
+    case fastest
+    case balanced
+    case smallest
+
+    var id: String {
+        rawValue
+    }
+
+    var displayName: String {
+        switch self {
+        case .fastest:
+            return "最快速度"
+        case .balanced:
+            return "平衡"
+        case .smallest:
+            return "最小檔案"
+        }
+    }
+
+    var defaultCompressionLevel: Int {
+        switch self {
+        case .fastest:
+            return 1
+        case .balanced:
+            return 6
+        case .smallest:
+            return 9
         }
     }
 }

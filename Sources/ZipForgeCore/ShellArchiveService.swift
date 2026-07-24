@@ -39,7 +39,7 @@ public final class ShellArchiveService: ArchiveService {
         _ = try runExecutable(dittoPath, arguments: ["-x", "-k", archiveURL.path, destinationURL.path], currentDirectoryURL: nil)
     }
 
-    public func createZip(from sourceURLs: [URL], destinationURL: URL) throws {
+    public func createZip(from sourceURLs: [URL], destinationURL: URL, settings: CompressionSettings = .standard) throws {
         if sourceURLs.isEmpty {
             throw ArchiveServiceError.emptySelection
         }
@@ -67,7 +67,18 @@ public final class ShellArchiveService: ArchiveService {
             stagedNames.append(stagedName)
         }
 
-        _ = try runExecutable(zipPath, arguments: ["-r", destinationURL.path] + stagedNames, currentDirectoryURL: stagingDirectory)
+        var arguments = ["-r", "-\(settings.compressionLevel)"]
+        switch settings.encryption {
+        case .none:
+            break
+        case .zipCrypto(let password):
+            guard !password.isEmpty else {
+                throw ArchiveServiceError.encryptionPasswordRequired
+            }
+            arguments += ["-P", password]
+        }
+        arguments += [destinationURL.path] + stagedNames
+        _ = try runExecutable(zipPath, arguments: arguments, currentDirectoryURL: stagingDirectory)
     }
 
     private func validateReadableArchive(_ archiveURL: URL) throws {
