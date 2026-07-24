@@ -1,5 +1,5 @@
 import SwiftUI
-import ZipForgeCore
+import TuckByteCore
 
 struct ContentView: View {
     @ObservedObject var viewModel: ArchiveViewModel
@@ -33,7 +33,7 @@ struct ContentView: View {
             },
             set: { _ in viewModel.errorMessage = nil }
         )) { alert in
-            Alert(title: Text("ZipForge"), message: Text(alert.message), dismissButton: .default(Text("好")))
+            Alert(title: Text("TuckByte"), message: Text(alert.message), dismissButton: .default(Text("好")))
         }
         .sheet(
             isPresented: Binding(

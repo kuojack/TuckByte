@@ -1,6 +1,6 @@
 import AppKit
 import Foundation
-import ZipForgeCore
+import TuckByteCore
 
 final class ArchiveViewModel: ObservableObject {
     @Published var archiveURL: URL?

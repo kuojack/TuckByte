@@ -1,0 +1,3 @@
+import SwiftUI
+
+TuckByteApp.main()

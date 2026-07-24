@@ -6,7 +6,7 @@ public struct FinderActionRequest: Equatable {
         case extractHere
     }
 
-    public static let scheme = "zipforge"
+    public static let scheme = "tuckbyte"
     public static let host = "finder"
 
     public let operation: Operation

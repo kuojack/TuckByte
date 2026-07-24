@@ -1,5 +1,5 @@
 import XCTest
-@testable import ZipForgeCore
+@testable import TuckByteCore
 
 final class ArchiveFormatTests: XCTestCase {
     func testDetectsKnownFormats() {

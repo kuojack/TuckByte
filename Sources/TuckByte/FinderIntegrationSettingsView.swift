@@ -80,7 +80,7 @@ struct FinderIntegrationOnboardingView: View {
             Label("啟用 Finder 整合", systemImage: "folder.badge.gearshape")
                 .font(.title2.weight(.semibold))
 
-            Text("啟用 ZipForge Finder Extension 後，檔案右鍵選單會出現「加入壓縮檔」與「解壓縮至此」。")
+            Text("啟用 TuckByte Finder Extension 後，檔案右鍵選單會出現「加入壓縮檔」與「解壓縮至此」。")
                 .foregroundColor(.secondary)
 
             HStack {

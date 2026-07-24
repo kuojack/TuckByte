@@ -79,7 +79,7 @@ public final class ShellArchiveService: ArchiveService {
         }
 
         let stagingDirectory = fileManager.temporaryDirectory
-            .appendingPathComponent("ZipForge-\(UUID().uuidString)", isDirectory: true)
+            .appendingPathComponent("TuckByte-\(UUID().uuidString)", isDirectory: true)
         try fileManager.createDirectory(at: stagingDirectory, withIntermediateDirectories: true, attributes: nil)
         defer {
             try? fileManager.removeItem(at: stagingDirectory)

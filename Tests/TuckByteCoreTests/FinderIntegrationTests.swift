@@ -1,13 +1,13 @@
 import XCTest
-@testable import ZipForgeCore
-@testable import ZipForgeIntegration
+@testable import TuckByteCore
+@testable import TuckByteIntegration
 
 final class FinderIntegrationTests: XCTestCase {
     private var tempDirectory: URL!
 
     override func setUpWithError() throws {
         tempDirectory = FileManager.default.temporaryDirectory
-            .appendingPathComponent("ZipForgeFinderTests-\(UUID().uuidString)", isDirectory: true)
+            .appendingPathComponent("TuckByteFinderTests-\(UUID().uuidString)", isDirectory: true)
         try FileManager.default.createDirectory(
             at: tempDirectory,
             withIntermediateDirectories: true,
@@ -43,12 +43,12 @@ final class FinderIntegrationTests: XCTestCase {
 
     func testFinderActionRejectsUnknownOperationAndMissingFiles() throws {
         let unknownOperationURL = try XCTUnwrap(
-            URL(string: "zipforge://finder?operation=unknown&path=/tmp/file.zip")
+            URL(string: "tuckbyte://finder?operation=unknown&path=/tmp/file.zip")
         )
         XCTAssertNil(FinderActionRequest(url: unknownOperationURL, fileExists: { _ in true }))
 
         let missingFileURL = try XCTUnwrap(
-            URL(string: "zipforge://finder?operation=extractHere&path=/tmp/missing.zip")
+            URL(string: "tuckbyte://finder?operation=extractHere&path=/tmp/missing.zip")
         )
         XCTAssertNil(FinderActionRequest(url: missingFileURL, fileExists: { _ in false }))
     }

@@ -19,20 +19,20 @@
 		A6000000000000000000000A /* FinderActionRouter.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5000000000000000000000A /* FinderActionRouter.swift */; };
 		A6000000000000000000000B /* FinderIntegrationSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5000000000000000000000B /* FinderIntegrationSettingsView.swift */; };
 		A6000000000000000000000C /* FinderNotificationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5000000000000000000000C /* FinderNotificationService.swift */; };
-		A6000000000000000000000D /* ZipForgeApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5000000000000000000000D /* ZipForgeApp.swift */; };
+		A6000000000000000000000D /* TuckByteApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5000000000000000000000D /* TuckByteApp.swift */; };
 		A6000000000000000000000E /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5000000000000000000000E /* main.swift */; };
 		A6000000000000000000000F /* FinderSync.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5000000000000000000000F /* FinderSync.swift */; };
-		A60000000000000000000010 /* libZipForgeCore.a in Frameworks */ = {isa = PBXBuildFile; fileRef = A50000000000000000000014 /* libZipForgeCore.a */; };
-		A60000000000000000000011 /* libZipForgeIntegration.a in Frameworks */ = {isa = PBXBuildFile; fileRef = A50000000000000000000015 /* libZipForgeIntegration.a */; };
-		A60000000000000000000012 /* libZipForgeIntegration.a in Frameworks */ = {isa = PBXBuildFile; fileRef = A50000000000000000000015 /* libZipForgeIntegration.a */; };
-		A60000000000000000000013 /* ZipForgeFinderSync.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = A50000000000000000000017 /* ZipForgeFinderSync.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, CodeSignOnCopy, ); }; };
+		A60000000000000000000010 /* libTuckByteCore.a in Frameworks */ = {isa = PBXBuildFile; fileRef = A50000000000000000000014 /* libTuckByteCore.a */; };
+		A60000000000000000000011 /* libTuckByteIntegration.a in Frameworks */ = {isa = PBXBuildFile; fileRef = A50000000000000000000015 /* libTuckByteIntegration.a */; };
+		A60000000000000000000012 /* libTuckByteIntegration.a in Frameworks */ = {isa = PBXBuildFile; fileRef = A50000000000000000000015 /* libTuckByteIntegration.a */; };
+		A60000000000000000000013 /* TuckByteFinderSync.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = A50000000000000000000017 /* TuckByteFinderSync.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, CodeSignOnCopy, ); }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
-		A70000000000000000000001 /* PBXContainerItemProxy */ = {isa = PBXContainerItemProxy; containerPortal = A10000000000000000000001 /* Project object */; proxyType = 1; remoteGlobalIDString = A30000000000000000000001; remoteInfo = ZipForgeCore; };
-		A70000000000000000000002 /* PBXContainerItemProxy */ = {isa = PBXContainerItemProxy; containerPortal = A10000000000000000000001 /* Project object */; proxyType = 1; remoteGlobalIDString = A30000000000000000000002; remoteInfo = ZipForgeIntegration; };
-		A70000000000000000000003 /* PBXContainerItemProxy */ = {isa = PBXContainerItemProxy; containerPortal = A10000000000000000000001 /* Project object */; proxyType = 1; remoteGlobalIDString = A30000000000000000000004; remoteInfo = ZipForgeFinderSync; };
-		A70000000000000000000004 /* PBXContainerItemProxy */ = {isa = PBXContainerItemProxy; containerPortal = A10000000000000000000001 /* Project object */; proxyType = 1; remoteGlobalIDString = A30000000000000000000002; remoteInfo = ZipForgeIntegration; };
+		A70000000000000000000001 /* PBXContainerItemProxy */ = {isa = PBXContainerItemProxy; containerPortal = A10000000000000000000001 /* Project object */; proxyType = 1; remoteGlobalIDString = A30000000000000000000001; remoteInfo = TuckByteCore; };
+		A70000000000000000000002 /* PBXContainerItemProxy */ = {isa = PBXContainerItemProxy; containerPortal = A10000000000000000000001 /* Project object */; proxyType = 1; remoteGlobalIDString = A30000000000000000000002; remoteInfo = TuckByteIntegration; };
+		A70000000000000000000003 /* PBXContainerItemProxy */ = {isa = PBXContainerItemProxy; containerPortal = A10000000000000000000001 /* Project object */; proxyType = 1; remoteGlobalIDString = A30000000000000000000004; remoteInfo = TuckByteFinderSync; };
+		A70000000000000000000004 /* PBXContainerItemProxy */ = {isa = PBXContainerItemProxy; containerPortal = A10000000000000000000001 /* Project object */; proxyType = 1; remoteGlobalIDString = A30000000000000000000002; remoteInfo = TuckByteIntegration; };
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -42,7 +42,7 @@
 			dstPath = "";
 			dstSubfolderSpec = 13;
 			files = (
-				A60000000000000000000013 /* ZipForgeFinderSync.appex in Embed App Extensions */,
+				A60000000000000000000013 /* TuckByteFinderSync.appex in Embed App Extensions */,
 			);
 			name = "Embed App Extensions";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -62,17 +62,17 @@
 		A5000000000000000000000A /* FinderActionRouter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FinderActionRouter.swift; sourceTree = "<group>"; };
 		A5000000000000000000000B /* FinderIntegrationSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FinderIntegrationSettingsView.swift; sourceTree = "<group>"; };
 		A5000000000000000000000C /* FinderNotificationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FinderNotificationService.swift; sourceTree = "<group>"; };
-		A5000000000000000000000D /* ZipForgeApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ZipForgeApp.swift; sourceTree = "<group>"; };
+		A5000000000000000000000D /* TuckByteApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TuckByteApp.swift; sourceTree = "<group>"; };
 		A5000000000000000000000E /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
 		A5000000000000000000000F /* FinderSync.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FinderSync.swift; sourceTree = "<group>"; };
-		A50000000000000000000010 /* ZipForge-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "ZipForge-Info.plist"; sourceTree = "<group>"; };
-		A50000000000000000000011 /* ZipForgeFinderSync-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "ZipForgeFinderSync-Info.plist"; sourceTree = "<group>"; };
-		A50000000000000000000012 /* ZipForgeFinderSync.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = ZipForgeFinderSync.entitlements; sourceTree = "<group>"; };
+		A50000000000000000000010 /* TuckByte-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "TuckByte-Info.plist"; sourceTree = "<group>"; };
+		A50000000000000000000011 /* TuckByteFinderSync-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "TuckByteFinderSync-Info.plist"; sourceTree = "<group>"; };
+		A50000000000000000000012 /* TuckByteFinderSync.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = TuckByteFinderSync.entitlements; sourceTree = "<group>"; };
 		A50000000000000000000013 /* AppIcon.svg */ = {isa = PBXFileReference; lastKnownFileType = image.svg; path = AppIcon.svg; sourceTree = "<group>"; };
-		A50000000000000000000014 /* libZipForgeCore.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libZipForgeCore.a; sourceTree = BUILT_PRODUCTS_DIR; };
-		A50000000000000000000015 /* libZipForgeIntegration.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libZipForgeIntegration.a; sourceTree = BUILT_PRODUCTS_DIR; };
-		A50000000000000000000016 /* ZipForge.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ZipForge.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		A50000000000000000000017 /* ZipForgeFinderSync.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = ZipForgeFinderSync.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		A50000000000000000000014 /* libTuckByteCore.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libTuckByteCore.a; sourceTree = BUILT_PRODUCTS_DIR; };
+		A50000000000000000000015 /* libTuckByteIntegration.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libTuckByteIntegration.a; sourceTree = BUILT_PRODUCTS_DIR; };
+		A50000000000000000000016 /* TuckByte.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = TuckByte.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		A50000000000000000000017 /* TuckByteFinderSync.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = TuckByteFinderSync.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -82,8 +82,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				A60000000000000000000010 /* libZipForgeCore.a in Frameworks */,
-				A60000000000000000000011 /* libZipForgeIntegration.a in Frameworks */,
+				A60000000000000000000010 /* libTuckByteCore.a in Frameworks */,
+				A60000000000000000000011 /* libTuckByteIntegration.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -91,7 +91,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				A60000000000000000000012 /* libZipForgeIntegration.a in Frameworks */,
+				A60000000000000000000012 /* libTuckByteIntegration.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -111,10 +111,10 @@
 		A20000000000000000000002 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				A50000000000000000000014 /* libZipForgeCore.a */,
-				A50000000000000000000015 /* libZipForgeIntegration.a */,
-				A50000000000000000000016 /* ZipForge.app */,
-				A50000000000000000000017 /* ZipForgeFinderSync.appex */,
+				A50000000000000000000014 /* libTuckByteCore.a */,
+				A50000000000000000000015 /* libTuckByteIntegration.a */,
+				A50000000000000000000016 /* TuckByte.app */,
+				A50000000000000000000017 /* TuckByteFinderSync.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -122,15 +122,15 @@
 		A20000000000000000000003 /* Sources */ = {
 			isa = PBXGroup;
 			children = (
-				A20000000000000000000004 /* ZipForgeCore */,
-				A20000000000000000000005 /* ZipForgeIntegration */,
-				A20000000000000000000006 /* ZipForge */,
-				A20000000000000000000007 /* ZipForgeFinderSync */,
+				A20000000000000000000004 /* TuckByteCore */,
+				A20000000000000000000005 /* TuckByteIntegration */,
+				A20000000000000000000006 /* TuckByte */,
+				A20000000000000000000007 /* TuckByteFinderSync */,
 			);
 			path = Sources;
 			sourceTree = "<group>";
 		};
-		A20000000000000000000004 /* ZipForgeCore */ = {
+		A20000000000000000000004 /* TuckByteCore */ = {
 			isa = PBXGroup;
 			children = (
 				A50000000000000000000001 /* ArchiveBatchExtractor.swift */,
@@ -140,18 +140,18 @@
 				A50000000000000000000005 /* CompressionSettings.swift */,
 				A50000000000000000000006 /* ShellArchiveService.swift */,
 			);
-			path = ZipForgeCore;
+			path = TuckByteCore;
 			sourceTree = "<group>";
 		};
-		A20000000000000000000005 /* ZipForgeIntegration */ = {
+		A20000000000000000000005 /* TuckByteIntegration */ = {
 			isa = PBXGroup;
 			children = (
 				A50000000000000000000007 /* FinderActionRequest.swift */,
 			);
-			path = ZipForgeIntegration;
+			path = TuckByteIntegration;
 			sourceTree = "<group>";
 		};
-		A20000000000000000000006 /* ZipForge */ = {
+		A20000000000000000000006 /* TuckByte */ = {
 			isa = PBXGroup;
 			children = (
 				A50000000000000000000008 /* ArchiveViewModel.swift */,
@@ -159,26 +159,26 @@
 				A5000000000000000000000A /* FinderActionRouter.swift */,
 				A5000000000000000000000B /* FinderIntegrationSettingsView.swift */,
 				A5000000000000000000000C /* FinderNotificationService.swift */,
-				A5000000000000000000000D /* ZipForgeApp.swift */,
+				A5000000000000000000000D /* TuckByteApp.swift */,
 				A5000000000000000000000E /* main.swift */,
 			);
-			path = ZipForge;
+			path = TuckByte;
 			sourceTree = "<group>";
 		};
-		A20000000000000000000007 /* ZipForgeFinderSync */ = {
+		A20000000000000000000007 /* TuckByteFinderSync */ = {
 			isa = PBXGroup;
 			children = (
 				A5000000000000000000000F /* FinderSync.swift */,
 			);
-			path = ZipForgeFinderSync;
+			path = TuckByteFinderSync;
 			sourceTree = "<group>";
 		};
 		A20000000000000000000008 /* Config */ = {
 			isa = PBXGroup;
 			children = (
-				A50000000000000000000010 /* ZipForge-Info.plist */,
-				A50000000000000000000011 /* ZipForgeFinderSync-Info.plist */,
-				A50000000000000000000012 /* ZipForgeFinderSync.entitlements */,
+				A50000000000000000000010 /* TuckByte-Info.plist */,
+				A50000000000000000000011 /* TuckByteFinderSync-Info.plist */,
+				A50000000000000000000012 /* TuckByteFinderSync.entitlements */,
 			);
 			path = Config;
 			sourceTree = "<group>";
@@ -194,37 +194,37 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		A30000000000000000000001 /* ZipForgeCore */ = {
+		A30000000000000000000001 /* TuckByteCore */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = A90000000000000000000002 /* Build configuration list for PBXNativeTarget "ZipForgeCore" */;
+			buildConfigurationList = A90000000000000000000002 /* Build configuration list for PBXNativeTarget "TuckByteCore" */;
 			buildPhases = (
 				A40000000000000000000001 /* Sources */,
 				A40000000000000000000002 /* Frameworks */,
 			);
 			buildRules = ();
 			dependencies = ();
-			name = ZipForgeCore;
-			productName = ZipForgeCore;
-			productReference = A50000000000000000000014 /* libZipForgeCore.a */;
+			name = TuckByteCore;
+			productName = TuckByteCore;
+			productReference = A50000000000000000000014 /* libTuckByteCore.a */;
 			productType = "com.apple.product-type.library.static";
 		};
-		A30000000000000000000002 /* ZipForgeIntegration */ = {
+		A30000000000000000000002 /* TuckByteIntegration */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = A90000000000000000000003 /* Build configuration list for PBXNativeTarget "ZipForgeIntegration" */;
+			buildConfigurationList = A90000000000000000000003 /* Build configuration list for PBXNativeTarget "TuckByteIntegration" */;
 			buildPhases = (
 				A40000000000000000000003 /* Sources */,
 				A40000000000000000000004 /* Frameworks */,
 			);
 			buildRules = ();
 			dependencies = ();
-			name = ZipForgeIntegration;
-			productName = ZipForgeIntegration;
-			productReference = A50000000000000000000015 /* libZipForgeIntegration.a */;
+			name = TuckByteIntegration;
+			productName = TuckByteIntegration;
+			productReference = A50000000000000000000015 /* libTuckByteIntegration.a */;
 			productType = "com.apple.product-type.library.static";
 		};
-		A30000000000000000000003 /* ZipForge */ = {
+		A30000000000000000000003 /* TuckByte */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = A90000000000000000000004 /* Build configuration list for PBXNativeTarget "ZipForge" */;
+			buildConfigurationList = A90000000000000000000004 /* Build configuration list for PBXNativeTarget "TuckByte" */;
 			buildPhases = (
 				A40000000000000000000007 /* Sources */,
 				A40000000000000000000008 /* Frameworks */,
@@ -237,14 +237,14 @@
 				A70000000000000000000006 /* PBXTargetDependency */,
 				A70000000000000000000007 /* PBXTargetDependency */,
 			);
-			name = ZipForge;
-			productName = ZipForge;
-			productReference = A50000000000000000000016 /* ZipForge.app */;
+			name = TuckByte;
+			productName = TuckByte;
+			productReference = A50000000000000000000016 /* TuckByte.app */;
 			productType = "com.apple.product-type.application";
 		};
-		A30000000000000000000004 /* ZipForgeFinderSync */ = {
+		A30000000000000000000004 /* TuckByteFinderSync */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = A90000000000000000000005 /* Build configuration list for PBXNativeTarget "ZipForgeFinderSync" */;
+			buildConfigurationList = A90000000000000000000005 /* Build configuration list for PBXNativeTarget "TuckByteFinderSync" */;
 			buildPhases = (
 				A4000000000000000000000A /* Sources */,
 				A4000000000000000000000B /* Frameworks */,
@@ -254,9 +254,9 @@
 			dependencies = (
 				A70000000000000000000008 /* PBXTargetDependency */,
 			);
-			name = ZipForgeFinderSync;
-			productName = ZipForgeFinderSync;
-			productReference = A50000000000000000000017 /* ZipForgeFinderSync.appex */;
+			name = TuckByteFinderSync;
+			productName = TuckByteFinderSync;
+			productReference = A50000000000000000000017 /* TuckByteFinderSync.appex */;
 			productType = "com.apple.product-type.app-extension";
 		};
 /* End PBXNativeTarget section */
@@ -275,7 +275,7 @@
 					A30000000000000000000004 = {CreatedOnToolsVersion = 16.3; };
 				};
 			};
-			buildConfigurationList = A90000000000000000000001 /* Build configuration list for PBXProject "ZipForge" */;
+			buildConfigurationList = A90000000000000000000001 /* Build configuration list for PBXProject "TuckByte" */;
 			compatibilityVersion = "Xcode 14.0";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
@@ -289,10 +289,10 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				A30000000000000000000001 /* ZipForgeCore */,
-				A30000000000000000000002 /* ZipForgeIntegration */,
-				A30000000000000000000003 /* ZipForge */,
-				A30000000000000000000004 /* ZipForgeFinderSync */,
+				A30000000000000000000001 /* TuckByteCore */,
+				A30000000000000000000002 /* TuckByteIntegration */,
+				A30000000000000000000003 /* TuckByte */,
+				A30000000000000000000004 /* TuckByteFinderSync */,
 			);
 		};
 /* End PBXProject section */
@@ -333,7 +333,7 @@
 				A6000000000000000000000A /* FinderActionRouter.swift in Sources */,
 				A6000000000000000000000B /* FinderIntegrationSettingsView.swift in Sources */,
 				A6000000000000000000000C /* FinderNotificationService.swift in Sources */,
-				A6000000000000000000000D /* ZipForgeApp.swift in Sources */,
+				A6000000000000000000000D /* TuckByteApp.swift in Sources */,
 				A6000000000000000000000E /* main.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -349,10 +349,10 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
-		A70000000000000000000005 /* PBXTargetDependency */ = {isa = PBXTargetDependency; target = A30000000000000000000001 /* ZipForgeCore */; targetProxy = A70000000000000000000001 /* PBXContainerItemProxy */; };
-		A70000000000000000000006 /* PBXTargetDependency */ = {isa = PBXTargetDependency; target = A30000000000000000000002 /* ZipForgeIntegration */; targetProxy = A70000000000000000000002 /* PBXContainerItemProxy */; };
-		A70000000000000000000007 /* PBXTargetDependency */ = {isa = PBXTargetDependency; target = A30000000000000000000004 /* ZipForgeFinderSync */; targetProxy = A70000000000000000000003 /* PBXContainerItemProxy */; };
-		A70000000000000000000008 /* PBXTargetDependency */ = {isa = PBXTargetDependency; target = A30000000000000000000002 /* ZipForgeIntegration */; targetProxy = A70000000000000000000004 /* PBXContainerItemProxy */; };
+		A70000000000000000000005 /* PBXTargetDependency */ = {isa = PBXTargetDependency; target = A30000000000000000000001 /* TuckByteCore */; targetProxy = A70000000000000000000001 /* PBXContainerItemProxy */; };
+		A70000000000000000000006 /* PBXTargetDependency */ = {isa = PBXTargetDependency; target = A30000000000000000000002 /* TuckByteIntegration */; targetProxy = A70000000000000000000002 /* PBXContainerItemProxy */; };
+		A70000000000000000000007 /* PBXTargetDependency */ = {isa = PBXTargetDependency; target = A30000000000000000000004 /* TuckByteFinderSync */; targetProxy = A70000000000000000000003 /* PBXContainerItemProxy */; };
+		A70000000000000000000008 /* PBXTargetDependency */ = {isa = PBXTargetDependency; target = A30000000000000000000002 /* TuckByteIntegration */; targetProxy = A70000000000000000000004 /* PBXContainerItemProxy */; };
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
@@ -428,16 +428,16 @@
 				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Manual;
-				CURRENT_PROJECT_VERSION = 3;
+				CURRENT_PROJECT_VERSION = 1;
 				ENABLE_HARDENED_RUNTIME = NO;
 				GENERATE_INFOPLIST_FILE = NO;
-				INFOPLIST_FILE = "Config/ZipForge-Info.plist";
+				INFOPLIST_FILE = "Config/TuckByte-Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MARKETING_VERSION = 0.2.1;
-				PRODUCT_BUNDLE_IDENTIFIER = com.zipforge.ZipForge;
+				MARKETING_VERSION = 0.3.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.kuojack.TuckByte;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Debug;
@@ -448,16 +448,16 @@
 				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Manual;
-				CURRENT_PROJECT_VERSION = 3;
+				CURRENT_PROJECT_VERSION = 1;
 				ENABLE_HARDENED_RUNTIME = NO;
 				GENERATE_INFOPLIST_FILE = NO;
-				INFOPLIST_FILE = "Config/ZipForge-Info.plist";
+				INFOPLIST_FILE = "Config/TuckByte-Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MARKETING_VERSION = 0.2.1;
-				PRODUCT_BUNDLE_IDENTIFIER = com.zipforge.ZipForge;
+				MARKETING_VERSION = 0.3.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.kuojack.TuckByte;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Release;
@@ -467,19 +467,19 @@
 			buildSettings = {
 				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = NO;
 				APPLICATION_EXTENSION_API_ONLY = YES;
-				CODE_SIGN_ENTITLEMENTS = Config/ZipForgeFinderSync.entitlements;
+				CODE_SIGN_ENTITLEMENTS = Config/TuckByteFinderSync.entitlements;
 				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Manual;
-				CURRENT_PROJECT_VERSION = 3;
+				CURRENT_PROJECT_VERSION = 1;
 				GENERATE_INFOPLIST_FILE = NO;
-				INFOPLIST_FILE = "Config/ZipForgeFinderSync-Info.plist";
+				INFOPLIST_FILE = "Config/TuckByteFinderSync-Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 					"@executable_path/../../../../Frameworks",
 				);
-				MARKETING_VERSION = 0.2.1;
-				PRODUCT_BUNDLE_IDENTIFIER = com.zipforge.ZipForge.FinderSync;
+				MARKETING_VERSION = 0.3.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.kuojack.TuckByte.FinderSync;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
 			};
@@ -490,19 +490,19 @@
 			buildSettings = {
 				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = NO;
 				APPLICATION_EXTENSION_API_ONLY = YES;
-				CODE_SIGN_ENTITLEMENTS = Config/ZipForgeFinderSync.entitlements;
+				CODE_SIGN_ENTITLEMENTS = Config/TuckByteFinderSync.entitlements;
 				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Manual;
-				CURRENT_PROJECT_VERSION = 3;
+				CURRENT_PROJECT_VERSION = 1;
 				GENERATE_INFOPLIST_FILE = NO;
-				INFOPLIST_FILE = "Config/ZipForgeFinderSync-Info.plist";
+				INFOPLIST_FILE = "Config/TuckByteFinderSync-Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 					"@executable_path/../../../../Frameworks",
 				);
-				MARKETING_VERSION = 0.2.1;
-				PRODUCT_BUNDLE_IDENTIFIER = com.zipforge.ZipForge.FinderSync;
+				MARKETING_VERSION = 0.3.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.kuojack.TuckByte.FinderSync;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
 			};
@@ -511,11 +511,11 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		A90000000000000000000001 /* Build configuration list for PBXProject "ZipForge" */ = {isa = XCConfigurationList; buildConfigurations = (A80000000000000000000001 /* Debug */, A80000000000000000000002 /* Release */, ); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
-		A90000000000000000000002 /* Build configuration list for PBXNativeTarget "ZipForgeCore" */ = {isa = XCConfigurationList; buildConfigurations = (A80000000000000000000003 /* Debug */, A80000000000000000000004 /* Release */, ); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
-		A90000000000000000000003 /* Build configuration list for PBXNativeTarget "ZipForgeIntegration" */ = {isa = XCConfigurationList; buildConfigurations = (A80000000000000000000005 /* Debug */, A80000000000000000000006 /* Release */, ); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
-		A90000000000000000000004 /* Build configuration list for PBXNativeTarget "ZipForge" */ = {isa = XCConfigurationList; buildConfigurations = (A80000000000000000000007 /* Debug */, A80000000000000000000008 /* Release */, ); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
-		A90000000000000000000005 /* Build configuration list for PBXNativeTarget "ZipForgeFinderSync" */ = {isa = XCConfigurationList; buildConfigurations = (A80000000000000000000009 /* Debug */, A8000000000000000000000A /* Release */, ); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
+		A90000000000000000000001 /* Build configuration list for PBXProject "TuckByte" */ = {isa = XCConfigurationList; buildConfigurations = (A80000000000000000000001 /* Debug */, A80000000000000000000002 /* Release */, ); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
+		A90000000000000000000002 /* Build configuration list for PBXNativeTarget "TuckByteCore" */ = {isa = XCConfigurationList; buildConfigurations = (A80000000000000000000003 /* Debug */, A80000000000000000000004 /* Release */, ); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
+		A90000000000000000000003 /* Build configuration list for PBXNativeTarget "TuckByteIntegration" */ = {isa = XCConfigurationList; buildConfigurations = (A80000000000000000000005 /* Debug */, A80000000000000000000006 /* Release */, ); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
+		A90000000000000000000004 /* Build configuration list for PBXNativeTarget "TuckByte" */ = {isa = XCConfigurationList; buildConfigurations = (A80000000000000000000007 /* Debug */, A80000000000000000000008 /* Release */, ); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
+		A90000000000000000000005 /* Build configuration list for PBXNativeTarget "TuckByteFinderSync" */ = {isa = XCConfigurationList; buildConfigurations = (A80000000000000000000009 /* Debug */, A8000000000000000000000A /* Release */, ); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
 /* End XCConfigurationList section */
 	};
 	rootObject = A10000000000000000000001 /* Project object */;

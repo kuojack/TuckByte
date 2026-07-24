@@ -1,6 +1,6 @@
 import SwiftUI
 
-struct ZipForgeApp: App {
+struct TuckByteApp: App {
     @StateObject private var viewModel: ArchiveViewModel
     @StateObject private var finderActionRouter: FinderActionRouter
 

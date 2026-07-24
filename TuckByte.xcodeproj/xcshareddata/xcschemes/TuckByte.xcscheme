@@ -15,9 +15,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "A30000000000000000000003"
-               BuildableName = "ZipForge.app"
-               BlueprintName = "ZipForge"
-               ReferencedContainer = "container:ZipForge.xcodeproj">
+               BuildableName = "TuckByte.app"
+               BlueprintName = "TuckByte"
+               ReferencedContainer = "container:TuckByte.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
       </BuildActionEntries>
@@ -44,9 +44,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "A30000000000000000000003"
-            BuildableName = "ZipForge.app"
-            BlueprintName = "ZipForge"
-            ReferencedContainer = "container:ZipForge.xcodeproj">
+            BuildableName = "TuckByte.app"
+            BlueprintName = "TuckByte"
+            ReferencedContainer = "container:TuckByte.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </LaunchAction>
@@ -60,9 +60,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "A30000000000000000000003"
-            BuildableName = "ZipForge.app"
-            BlueprintName = "ZipForge"
-            ReferencedContainer = "container:ZipForge.xcodeproj">
+            BuildableName = "TuckByte.app"
+            BlueprintName = "TuckByte"
+            ReferencedContainer = "container:TuckByte.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </ProfileAction>

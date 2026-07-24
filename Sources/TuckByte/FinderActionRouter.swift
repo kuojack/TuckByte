@@ -1,14 +1,14 @@
 import AppKit
 import Foundation
-import ZipForgeCore
-import ZipForgeIntegration
+import TuckByteCore
+import TuckByteIntegration
 
 final class FinderActionRouter: ObservableObject {
     private let viewModel: ArchiveViewModel
     private let batchExtractor: ArchiveBatchExtractor
     private let notificationService: FinderNotificationService
     private let workQueue = DispatchQueue(
-        label: "com.zipforge.finder-extraction",
+        label: "com.kuojack.TuckByte.finder-extraction",
         qos: .userInitiated
     )
 

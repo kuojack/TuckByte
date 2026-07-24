@@ -1,5 +1,5 @@
 import XCTest
-@testable import ZipForgeCore
+@testable import TuckByteCore
 
 final class ShellArchiveServiceTests: XCTestCase {
     private var tempDirectory: URL!
@@ -7,7 +7,7 @@ final class ShellArchiveServiceTests: XCTestCase {
 
     override func setUpWithError() throws {
         tempDirectory = FileManager.default.temporaryDirectory
-            .appendingPathComponent("ZipForgeTests-\(UUID().uuidString)", isDirectory: true)
+            .appendingPathComponent("TuckByteTests-\(UUID().uuidString)", isDirectory: true)
         try FileManager.default.createDirectory(at: tempDirectory, withIntermediateDirectories: true, attributes: nil)
         service = ShellArchiveService()
     }
@@ -37,7 +37,7 @@ final class ShellArchiveServiceTests: XCTestCase {
         let sourceDirectory = tempDirectory.appendingPathComponent("Source", isDirectory: true)
         try FileManager.default.createDirectory(at: sourceDirectory, withIntermediateDirectories: true, attributes: nil)
         let fileURL = sourceDirectory.appendingPathComponent("hello.txt")
-        try "Hello ZipForge".data(using: .utf8)!.write(to: fileURL)
+        try "Hello TuckByte".data(using: .utf8)!.write(to: fileURL)
 
         let zipURL = tempDirectory.appendingPathComponent("Archive.zip")
         try service.createZip(from: [sourceDirectory], destinationURL: zipURL)
@@ -53,7 +53,7 @@ final class ShellArchiveServiceTests: XCTestCase {
         try service.extract(archiveURL: zipURL, destinationURL: destinationURL)
         let extractedFileURL = destinationURL.appendingPathComponent("Source/hello.txt")
         let extractedText = try String(contentsOf: extractedFileURL)
-        XCTAssertEqual(extractedText, "Hello ZipForge")
+        XCTAssertEqual(extractedText, "Hello TuckByte")
     }
 
     func testCreateZipFromMultipleParentDirectories() throws {
@@ -112,7 +112,7 @@ final class ShellArchiveServiceTests: XCTestCase {
 
     func testWrapsExistingArchiveInAnotherZip() throws {
         let sourceFileURL = tempDirectory.appendingPathComponent("內容.txt")
-        try "Nested by ZipForge".data(using: .utf8)!.write(to: sourceFileURL)
+        try "Nested by TuckByte".data(using: .utf8)!.write(to: sourceFileURL)
 
         let innerArchiveURL = tempDirectory.appendingPathComponent("Inner.zip")
         try service.createZip(from: [sourceFileURL], destinationURL: innerArchiveURL)

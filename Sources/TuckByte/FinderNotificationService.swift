@@ -1,6 +1,6 @@
 import Foundation
 import UserNotifications
-import ZipForgeCore
+import TuckByteCore
 
 final class FinderNotificationService {
     private let notificationCenter: UNUserNotificationCenter
@@ -47,7 +47,7 @@ final class FinderNotificationService {
         completion: @escaping (Bool) -> Void
     ) {
         let content = UNMutableNotificationContent()
-        content.title = "ZipForge 解壓完成"
+        content.title = "TuckByte 解壓完成"
 
         if results.count == 1, let result = results.first, let destinationURL = result.destinationURL {
             content.body = "\(result.archiveURL.lastPathComponent) 已解壓到 \(destinationURL.path)"

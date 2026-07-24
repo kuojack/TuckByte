@@ -3,21 +3,21 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 DIST_DIR="$ROOT_DIR/dist"
-APP_NAME="ZipForge"
+APP_NAME="TuckByte"
 APP_DIR="$DIST_DIR/$APP_NAME.app"
 DERIVED_DATA_DIR="$ROOT_DIR/.build/xcode"
 BUILT_APP_DIR="$DERIVED_DATA_DIR/Build/Products/Release/$APP_NAME.app"
 RESOURCES_DIR="$APP_DIR/Contents/Resources"
-EXTENSION_DIR="$APP_DIR/Contents/PlugIns/ZipForgeFinderSync.appex"
+EXTENSION_DIR="$APP_DIR/Contents/PlugIns/TuckByteFinderSync.appex"
 SWIFT_CONCURRENCY_LIBRARY="$APP_DIR/Contents/Frameworks/libswift_Concurrency.dylib"
 ICONSET_DIR="$DIST_DIR/AppIcon.iconset"
-VERSION="${ZIPFORGE_VERSION:-0.2.1}"
-BUILD_NUMBER="${ZIPFORGE_BUILD_NUMBER:-3}"
+VERSION="${TUCKBYTE_VERSION:-0.3.0}"
+BUILD_NUMBER="${TUCKBYTE_BUILD_NUMBER:-1}"
 
 cd "$ROOT_DIR"
 
 xcodebuild \
-    -project "$ROOT_DIR/ZipForge.xcodeproj" \
+    -project "$ROOT_DIR/TuckByte.xcodeproj" \
     -scheme "$APP_NAME" \
     -configuration Release \
     -derivedDataPath "$DERIVED_DATA_DIR" \
@@ -130,7 +130,7 @@ fi
 /usr/bin/codesign \
     --force \
     --sign - \
-    --entitlements "$ROOT_DIR/Config/ZipForgeFinderSync.entitlements" \
+    --entitlements "$ROOT_DIR/Config/TuckByteFinderSync.entitlements" \
     "$EXTENSION_DIR"
 /usr/bin/codesign --force --sign - "$APP_DIR"
 /usr/bin/codesign --verify --deep --strict "$APP_DIR"

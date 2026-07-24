@@ -2,31 +2,31 @@
 import PackageDescription
 
 let package = Package(
-    name: "ZipForge",
+    name: "TuckByte",
     platforms: [
         .macOS(.v11)
     ],
     products: [
-        .executable(name: "ZipForge", targets: ["ZipForge"]),
-        .library(name: "ZipForgeCore", targets: ["ZipForgeCore"]),
-        .library(name: "ZipForgeIntegration", targets: ["ZipForgeIntegration"])
+        .executable(name: "TuckByte", targets: ["TuckByte"]),
+        .library(name: "TuckByteCore", targets: ["TuckByteCore"]),
+        .library(name: "TuckByteIntegration", targets: ["TuckByteIntegration"])
     ],
     targets: [
         .target(
-            name: "ZipForgeCore",
+            name: "TuckByteCore",
             dependencies: []
         ),
         .target(
-            name: "ZipForgeIntegration",
+            name: "TuckByteIntegration",
             dependencies: []
         ),
         .target(
-            name: "ZipForge",
-            dependencies: ["ZipForgeCore", "ZipForgeIntegration"]
+            name: "TuckByte",
+            dependencies: ["TuckByteCore", "TuckByteIntegration"]
         ),
         .testTarget(
-            name: "ZipForgeCoreTests",
-            dependencies: ["ZipForgeCore", "ZipForgeIntegration"]
+            name: "TuckByteCoreTests",
+            dependencies: ["TuckByteCore", "TuckByteIntegration"]
         )
     ]
 )

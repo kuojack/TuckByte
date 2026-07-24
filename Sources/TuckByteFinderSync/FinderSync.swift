@@ -1,12 +1,12 @@
 import AppKit
 import FinderSync
 import OSLog
-import ZipForgeIntegration
+import TuckByteIntegration
 
 final class FinderSync: FIFinderSync {
     private let controller = FIFinderSyncController.default()
     private let logger = Logger(
-        subsystem: "com.zipforge.ZipForge.FinderSync",
+        subsystem: "com.kuojack.TuckByte.FinderSync",
         category: "FinderSync"
     )
 
@@ -28,16 +28,16 @@ final class FinderSync: FIFinderSync {
         )
         guard FinderMenuPolicy.canAddToArchive(selectedURLs) else { return nil }
 
-        let menu = NSMenu(title: "ZipForge")
+        let menu = NSMenu(title: "TuckByte")
         menu.addItem(
-            withTitle: "ZipForge：加入壓縮檔",
+            withTitle: "TuckByte：加入壓縮檔",
             action: #selector(addToArchive),
             keyEquivalent: ""
         )
 
         if FinderMenuPolicy.canExtractHere(selectedURLs) {
             menu.addItem(
-                withTitle: "ZipForge：解壓縮至此",
+                withTitle: "TuckByte：解壓縮至此",
                 action: #selector(extractHere),
                 keyEquivalent: ""
             )
