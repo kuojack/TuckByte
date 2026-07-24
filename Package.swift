@@ -8,7 +8,8 @@ let package = Package(
     ],
     products: [
         .executable(name: "ZipForge", targets: ["ZipForge"]),
-        .library(name: "ZipForgeCore", targets: ["ZipForgeCore"])
+        .library(name: "ZipForgeCore", targets: ["ZipForgeCore"]),
+        .library(name: "ZipForgeIntegration", targets: ["ZipForgeIntegration"])
     ],
     targets: [
         .target(
@@ -16,12 +17,16 @@ let package = Package(
             dependencies: []
         ),
         .target(
+            name: "ZipForgeIntegration",
+            dependencies: []
+        ),
+        .target(
             name: "ZipForge",
-            dependencies: ["ZipForgeCore"]
+            dependencies: ["ZipForgeCore", "ZipForgeIntegration"]
         ),
         .testTarget(
             name: "ZipForgeCoreTests",
-            dependencies: ["ZipForgeCore"]
+            dependencies: ["ZipForgeCore", "ZipForgeIntegration"]
         )
     ]
 )

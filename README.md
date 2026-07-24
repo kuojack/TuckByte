@@ -7,6 +7,8 @@ ZipForge is an early macOS archive utility written in Swift. The first version f
 - SwiftUI macOS interface
 - Drag and drop archive selection
 - Drag and drop compression queue for files and folders
+- Finder right-click actions for adding items to ZipForge and extracting ZIP files in place
+- Background Finder extraction with completion notifications
 - Wrap an opened ZIP in another ZIP layer with its own compression level or password
 - Compression settings panel with format choice, speed presets, compression level, and traditional ZIP password protection
 - Zip inspection through `/usr/bin/zipinfo` and `/usr/bin/tar`
@@ -19,6 +21,7 @@ ZipForge is an early macOS archive utility written in Swift. The first version f
 ```sh
 swift test
 swift run ZipForge
+xcodebuild -project ZipForge.xcodeproj -scheme ZipForge -configuration Release build
 ```
 
 ## Package a local app
@@ -28,7 +31,16 @@ Scripts/package_app.sh
 Scripts/package_dmg.sh
 ```
 
-The packaging scripts create `dist/ZipForge.app` and `dist/ZipForge.dmg`. This first productized build uses ad-hoc signing for local sharing and testing; it is not notarized for public distribution.
+The packaging scripts create `dist/ZipForge.app` and `dist/ZipForge.dmg`. The Xcode build embeds `ZipForgeFinderSync.appex`, then the packaging script applies ad-hoc signatures to the extension and containing app. This local sharing build is not notarized for public distribution.
+
+## Enable Finder integration
+
+1. Drag `ZipForge.app` from the DMG into `/Applications`.
+2. Launch ZipForge once and use its Finder integration prompt or Settings window.
+3. Open the macOS extension management interface and enable **ZipForge Finder**.
+4. Allow notifications if background extraction completion should remain unobtrusive.
+
+After the extension is enabled, right-click any Finder selection and choose **加入壓縮檔**. When every selected item is a ZIP file, **解壓縮至此** is also available. Finder extraction creates a sibling folder named after each archive; existing names receive a numeric suffix and are never overwritten.
 
 ## Product notes
 
@@ -38,4 +50,4 @@ The first compression settings implementation maps speed presets to standard ZIP
 
 `swift test` and full SwiftPM builds require a complete Xcode installation because XCTest must be available. With Command Line Tools only, core source syntax can still be checked with `swiftc -parse Sources/ZipForgeCore/*.swift`.
 
-The initial build is designed for local development and direct execution, not App Store distribution. Later versions can add libarchive/7z support, password handling, Finder integration, app signing, and a packaged `.app` release.
+The current build is designed for local development and direct execution, not App Store distribution. Later versions can add libarchive/7z support, password handling for source archives, Developer ID signing, and notarization.

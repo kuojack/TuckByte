@@ -1,0 +1,522 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		A60000000000000000000001 /* ArchiveBatchExtractor.swift in Sources */ = {isa = PBXBuildFile; fileRef = A50000000000000000000001 /* ArchiveBatchExtractor.swift */; };
+		A60000000000000000000002 /* ArchiveEntry.swift in Sources */ = {isa = PBXBuildFile; fileRef = A50000000000000000000002 /* ArchiveEntry.swift */; };
+		A60000000000000000000003 /* ArchiveFormat.swift in Sources */ = {isa = PBXBuildFile; fileRef = A50000000000000000000003 /* ArchiveFormat.swift */; };
+		A60000000000000000000004 /* ArchiveService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A50000000000000000000004 /* ArchiveService.swift */; };
+		A60000000000000000000005 /* CompressionSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = A50000000000000000000005 /* CompressionSettings.swift */; };
+		A60000000000000000000006 /* ShellArchiveService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A50000000000000000000006 /* ShellArchiveService.swift */; };
+		A60000000000000000000007 /* FinderActionRequest.swift in Sources */ = {isa = PBXBuildFile; fileRef = A50000000000000000000007 /* FinderActionRequest.swift */; };
+		A60000000000000000000008 /* ArchiveViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A50000000000000000000008 /* ArchiveViewModel.swift */; };
+		A60000000000000000000009 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A50000000000000000000009 /* ContentView.swift */; };
+		A6000000000000000000000A /* FinderActionRouter.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5000000000000000000000A /* FinderActionRouter.swift */; };
+		A6000000000000000000000B /* FinderIntegrationSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5000000000000000000000B /* FinderIntegrationSettingsView.swift */; };
+		A6000000000000000000000C /* FinderNotificationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5000000000000000000000C /* FinderNotificationService.swift */; };
+		A6000000000000000000000D /* ZipForgeApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5000000000000000000000D /* ZipForgeApp.swift */; };
+		A6000000000000000000000E /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5000000000000000000000E /* main.swift */; };
+		A6000000000000000000000F /* FinderSync.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5000000000000000000000F /* FinderSync.swift */; };
+		A60000000000000000000010 /* libZipForgeCore.a in Frameworks */ = {isa = PBXBuildFile; fileRef = A50000000000000000000014 /* libZipForgeCore.a */; };
+		A60000000000000000000011 /* libZipForgeIntegration.a in Frameworks */ = {isa = PBXBuildFile; fileRef = A50000000000000000000015 /* libZipForgeIntegration.a */; };
+		A60000000000000000000012 /* libZipForgeIntegration.a in Frameworks */ = {isa = PBXBuildFile; fileRef = A50000000000000000000015 /* libZipForgeIntegration.a */; };
+		A60000000000000000000013 /* ZipForgeFinderSync.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = A50000000000000000000017 /* ZipForgeFinderSync.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, CodeSignOnCopy, ); }; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		A70000000000000000000001 /* PBXContainerItemProxy */ = {isa = PBXContainerItemProxy; containerPortal = A10000000000000000000001 /* Project object */; proxyType = 1; remoteGlobalIDString = A30000000000000000000001; remoteInfo = ZipForgeCore; };
+		A70000000000000000000002 /* PBXContainerItemProxy */ = {isa = PBXContainerItemProxy; containerPortal = A10000000000000000000001 /* Project object */; proxyType = 1; remoteGlobalIDString = A30000000000000000000002; remoteInfo = ZipForgeIntegration; };
+		A70000000000000000000003 /* PBXContainerItemProxy */ = {isa = PBXContainerItemProxy; containerPortal = A10000000000000000000001 /* Project object */; proxyType = 1; remoteGlobalIDString = A30000000000000000000004; remoteInfo = ZipForgeFinderSync; };
+		A70000000000000000000004 /* PBXContainerItemProxy */ = {isa = PBXContainerItemProxy; containerPortal = A10000000000000000000001 /* Project object */; proxyType = 1; remoteGlobalIDString = A30000000000000000000002; remoteInfo = ZipForgeIntegration; };
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		A40000000000000000000006 /* Embed App Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				A60000000000000000000013 /* ZipForgeFinderSync.appex in Embed App Extensions */,
+			);
+			name = "Embed App Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		A50000000000000000000001 /* ArchiveBatchExtractor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ArchiveBatchExtractor.swift; sourceTree = "<group>"; };
+		A50000000000000000000002 /* ArchiveEntry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ArchiveEntry.swift; sourceTree = "<group>"; };
+		A50000000000000000000003 /* ArchiveFormat.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ArchiveFormat.swift; sourceTree = "<group>"; };
+		A50000000000000000000004 /* ArchiveService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ArchiveService.swift; sourceTree = "<group>"; };
+		A50000000000000000000005 /* CompressionSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CompressionSettings.swift; sourceTree = "<group>"; };
+		A50000000000000000000006 /* ShellArchiveService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShellArchiveService.swift; sourceTree = "<group>"; };
+		A50000000000000000000007 /* FinderActionRequest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FinderActionRequest.swift; sourceTree = "<group>"; };
+		A50000000000000000000008 /* ArchiveViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ArchiveViewModel.swift; sourceTree = "<group>"; };
+		A50000000000000000000009 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		A5000000000000000000000A /* FinderActionRouter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FinderActionRouter.swift; sourceTree = "<group>"; };
+		A5000000000000000000000B /* FinderIntegrationSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FinderIntegrationSettingsView.swift; sourceTree = "<group>"; };
+		A5000000000000000000000C /* FinderNotificationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FinderNotificationService.swift; sourceTree = "<group>"; };
+		A5000000000000000000000D /* ZipForgeApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ZipForgeApp.swift; sourceTree = "<group>"; };
+		A5000000000000000000000E /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
+		A5000000000000000000000F /* FinderSync.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FinderSync.swift; sourceTree = "<group>"; };
+		A50000000000000000000010 /* ZipForge-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "ZipForge-Info.plist"; sourceTree = "<group>"; };
+		A50000000000000000000011 /* ZipForgeFinderSync-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "ZipForgeFinderSync-Info.plist"; sourceTree = "<group>"; };
+		A50000000000000000000012 /* ZipForgeFinderSync.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = ZipForgeFinderSync.entitlements; sourceTree = "<group>"; };
+		A50000000000000000000013 /* AppIcon.svg */ = {isa = PBXFileReference; lastKnownFileType = image.svg; path = AppIcon.svg; sourceTree = "<group>"; };
+		A50000000000000000000014 /* libZipForgeCore.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libZipForgeCore.a; sourceTree = BUILT_PRODUCTS_DIR; };
+		A50000000000000000000015 /* libZipForgeIntegration.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libZipForgeIntegration.a; sourceTree = BUILT_PRODUCTS_DIR; };
+		A50000000000000000000016 /* ZipForge.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ZipForge.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		A50000000000000000000017 /* ZipForgeFinderSync.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = ZipForgeFinderSync.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		A40000000000000000000002 /* Frameworks */ = {isa = PBXFrameworksBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
+		A40000000000000000000004 /* Frameworks */ = {isa = PBXFrameworksBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
+		A40000000000000000000008 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A60000000000000000000010 /* libZipForgeCore.a in Frameworks */,
+				A60000000000000000000011 /* libZipForgeIntegration.a in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A4000000000000000000000B /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A60000000000000000000012 /* libZipForgeIntegration.a in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		A20000000000000000000001 = {
+			isa = PBXGroup;
+			children = (
+				A20000000000000000000003 /* Sources */,
+				A20000000000000000000008 /* Config */,
+				A20000000000000000000009 /* Resources */,
+				A20000000000000000000002 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		A20000000000000000000002 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				A50000000000000000000014 /* libZipForgeCore.a */,
+				A50000000000000000000015 /* libZipForgeIntegration.a */,
+				A50000000000000000000016 /* ZipForge.app */,
+				A50000000000000000000017 /* ZipForgeFinderSync.appex */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		A20000000000000000000003 /* Sources */ = {
+			isa = PBXGroup;
+			children = (
+				A20000000000000000000004 /* ZipForgeCore */,
+				A20000000000000000000005 /* ZipForgeIntegration */,
+				A20000000000000000000006 /* ZipForge */,
+				A20000000000000000000007 /* ZipForgeFinderSync */,
+			);
+			path = Sources;
+			sourceTree = "<group>";
+		};
+		A20000000000000000000004 /* ZipForgeCore */ = {
+			isa = PBXGroup;
+			children = (
+				A50000000000000000000001 /* ArchiveBatchExtractor.swift */,
+				A50000000000000000000002 /* ArchiveEntry.swift */,
+				A50000000000000000000003 /* ArchiveFormat.swift */,
+				A50000000000000000000004 /* ArchiveService.swift */,
+				A50000000000000000000005 /* CompressionSettings.swift */,
+				A50000000000000000000006 /* ShellArchiveService.swift */,
+			);
+			path = ZipForgeCore;
+			sourceTree = "<group>";
+		};
+		A20000000000000000000005 /* ZipForgeIntegration */ = {
+			isa = PBXGroup;
+			children = (
+				A50000000000000000000007 /* FinderActionRequest.swift */,
+			);
+			path = ZipForgeIntegration;
+			sourceTree = "<group>";
+		};
+		A20000000000000000000006 /* ZipForge */ = {
+			isa = PBXGroup;
+			children = (
+				A50000000000000000000008 /* ArchiveViewModel.swift */,
+				A50000000000000000000009 /* ContentView.swift */,
+				A5000000000000000000000A /* FinderActionRouter.swift */,
+				A5000000000000000000000B /* FinderIntegrationSettingsView.swift */,
+				A5000000000000000000000C /* FinderNotificationService.swift */,
+				A5000000000000000000000D /* ZipForgeApp.swift */,
+				A5000000000000000000000E /* main.swift */,
+			);
+			path = ZipForge;
+			sourceTree = "<group>";
+		};
+		A20000000000000000000007 /* ZipForgeFinderSync */ = {
+			isa = PBXGroup;
+			children = (
+				A5000000000000000000000F /* FinderSync.swift */,
+			);
+			path = ZipForgeFinderSync;
+			sourceTree = "<group>";
+		};
+		A20000000000000000000008 /* Config */ = {
+			isa = PBXGroup;
+			children = (
+				A50000000000000000000010 /* ZipForge-Info.plist */,
+				A50000000000000000000011 /* ZipForgeFinderSync-Info.plist */,
+				A50000000000000000000012 /* ZipForgeFinderSync.entitlements */,
+			);
+			path = Config;
+			sourceTree = "<group>";
+		};
+		A20000000000000000000009 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				A50000000000000000000013 /* AppIcon.svg */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		A30000000000000000000001 /* ZipForgeCore */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A90000000000000000000002 /* Build configuration list for PBXNativeTarget "ZipForgeCore" */;
+			buildPhases = (
+				A40000000000000000000001 /* Sources */,
+				A40000000000000000000002 /* Frameworks */,
+			);
+			buildRules = ();
+			dependencies = ();
+			name = ZipForgeCore;
+			productName = ZipForgeCore;
+			productReference = A50000000000000000000014 /* libZipForgeCore.a */;
+			productType = "com.apple.product-type.library.static";
+		};
+		A30000000000000000000002 /* ZipForgeIntegration */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A90000000000000000000003 /* Build configuration list for PBXNativeTarget "ZipForgeIntegration" */;
+			buildPhases = (
+				A40000000000000000000003 /* Sources */,
+				A40000000000000000000004 /* Frameworks */,
+			);
+			buildRules = ();
+			dependencies = ();
+			name = ZipForgeIntegration;
+			productName = ZipForgeIntegration;
+			productReference = A50000000000000000000015 /* libZipForgeIntegration.a */;
+			productType = "com.apple.product-type.library.static";
+		};
+		A30000000000000000000003 /* ZipForge */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A90000000000000000000004 /* Build configuration list for PBXNativeTarget "ZipForge" */;
+			buildPhases = (
+				A40000000000000000000007 /* Sources */,
+				A40000000000000000000008 /* Frameworks */,
+				A40000000000000000000009 /* Resources */,
+				A40000000000000000000006 /* Embed App Extensions */,
+			);
+			buildRules = ();
+			dependencies = (
+				A70000000000000000000005 /* PBXTargetDependency */,
+				A70000000000000000000006 /* PBXTargetDependency */,
+				A70000000000000000000007 /* PBXTargetDependency */,
+			);
+			name = ZipForge;
+			productName = ZipForge;
+			productReference = A50000000000000000000016 /* ZipForge.app */;
+			productType = "com.apple.product-type.application";
+		};
+		A30000000000000000000004 /* ZipForgeFinderSync */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A90000000000000000000005 /* Build configuration list for PBXNativeTarget "ZipForgeFinderSync" */;
+			buildPhases = (
+				A4000000000000000000000A /* Sources */,
+				A4000000000000000000000B /* Frameworks */,
+				A4000000000000000000000C /* Resources */,
+			);
+			buildRules = ();
+			dependencies = (
+				A70000000000000000000008 /* PBXTargetDependency */,
+			);
+			name = ZipForgeFinderSync;
+			productName = ZipForgeFinderSync;
+			productReference = A50000000000000000000017 /* ZipForgeFinderSync.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		A10000000000000000000001 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1630;
+				LastUpgradeCheck = 1630;
+				TargetAttributes = {
+					A30000000000000000000001 = {CreatedOnToolsVersion = 16.3; };
+					A30000000000000000000002 = {CreatedOnToolsVersion = 16.3; };
+					A30000000000000000000003 = {CreatedOnToolsVersion = 16.3; };
+					A30000000000000000000004 = {CreatedOnToolsVersion = 16.3; };
+				};
+			};
+			buildConfigurationList = A90000000000000000000001 /* Build configuration list for PBXProject "ZipForge" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+				"zh-Hant",
+			);
+			mainGroup = A20000000000000000000001;
+			productRefGroup = A20000000000000000000002 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				A30000000000000000000001 /* ZipForgeCore */,
+				A30000000000000000000002 /* ZipForgeIntegration */,
+				A30000000000000000000003 /* ZipForge */,
+				A30000000000000000000004 /* ZipForgeFinderSync */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		A40000000000000000000009 /* Resources */ = {isa = PBXResourcesBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
+		A4000000000000000000000C /* Resources */ = {isa = PBXResourcesBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		A40000000000000000000001 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A60000000000000000000001 /* ArchiveBatchExtractor.swift in Sources */,
+				A60000000000000000000002 /* ArchiveEntry.swift in Sources */,
+				A60000000000000000000003 /* ArchiveFormat.swift in Sources */,
+				A60000000000000000000004 /* ArchiveService.swift in Sources */,
+				A60000000000000000000005 /* CompressionSettings.swift in Sources */,
+				A60000000000000000000006 /* ShellArchiveService.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A40000000000000000000003 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A60000000000000000000007 /* FinderActionRequest.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A40000000000000000000007 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A60000000000000000000008 /* ArchiveViewModel.swift in Sources */,
+				A60000000000000000000009 /* ContentView.swift in Sources */,
+				A6000000000000000000000A /* FinderActionRouter.swift in Sources */,
+				A6000000000000000000000B /* FinderIntegrationSettingsView.swift in Sources */,
+				A6000000000000000000000C /* FinderNotificationService.swift in Sources */,
+				A6000000000000000000000D /* ZipForgeApp.swift in Sources */,
+				A6000000000000000000000E /* main.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A4000000000000000000000A /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A6000000000000000000000F /* FinderSync.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		A70000000000000000000005 /* PBXTargetDependency */ = {isa = PBXTargetDependency; target = A30000000000000000000001 /* ZipForgeCore */; targetProxy = A70000000000000000000001 /* PBXContainerItemProxy */; };
+		A70000000000000000000006 /* PBXTargetDependency */ = {isa = PBXTargetDependency; target = A30000000000000000000002 /* ZipForgeIntegration */; targetProxy = A70000000000000000000002 /* PBXContainerItemProxy */; };
+		A70000000000000000000007 /* PBXTargetDependency */ = {isa = PBXTargetDependency; target = A30000000000000000000004 /* ZipForgeFinderSync */; targetProxy = A70000000000000000000003 /* PBXContainerItemProxy */; };
+		A70000000000000000000008 /* PBXTargetDependency */ = {isa = PBXTargetDependency; target = A30000000000000000000002 /* ZipForgeIntegration */; targetProxy = A70000000000000000000004 /* PBXContainerItemProxy */; };
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		A80000000000000000000001 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = "$(ARCHS_STANDARD)";
+				CLANG_ENABLE_MODULES = YES;
+				MACOSX_DEPLOYMENT_TARGET = 11.0;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = macosx;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		A80000000000000000000002 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = "$(ARCHS_STANDARD)";
+				CLANG_ENABLE_MODULES = YES;
+				MACOSX_DEPLOYMENT_TARGET = 11.0;
+				ONLY_ACTIVE_ARCH = NO;
+				SDKROOT = macosx;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		A80000000000000000000003 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				DEFINES_MODULE = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_INSTALL_OBJC_HEADER = NO;
+			};
+			name = Debug;
+		};
+		A80000000000000000000004 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				DEFINES_MODULE = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_INSTALL_OBJC_HEADER = NO;
+			};
+			name = Release;
+		};
+		A80000000000000000000005 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				DEFINES_MODULE = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_INSTALL_OBJC_HEADER = NO;
+			};
+			name = Debug;
+		};
+		A80000000000000000000006 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				DEFINES_MODULE = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_INSTALL_OBJC_HEADER = NO;
+			};
+			name = Release;
+		};
+		A80000000000000000000007 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_STYLE = Manual;
+				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_HARDENED_RUNTIME = NO;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = "Config/ZipForge-Info.plist";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MARKETING_VERSION = 0.2.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.zipforge.ZipForge;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Debug;
+		};
+		A80000000000000000000008 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_STYLE = Manual;
+				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_HARDENED_RUNTIME = NO;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = "Config/ZipForge-Info.plist";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MARKETING_VERSION = 0.2.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.zipforge.ZipForge;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Release;
+		};
+		A80000000000000000000009 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = NO;
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CODE_SIGN_ENTITLEMENTS = Config/ZipForgeFinderSync.entitlements;
+				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_STYLE = Manual;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = "Config/ZipForgeFinderSync-Info.plist";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@executable_path/../../../../Frameworks",
+				);
+				MARKETING_VERSION = 0.2.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.zipforge.ZipForge.FinderSync;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+			};
+			name = Debug;
+		};
+		A8000000000000000000000A /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = NO;
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CODE_SIGN_ENTITLEMENTS = Config/ZipForgeFinderSync.entitlements;
+				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_STYLE = Manual;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = "Config/ZipForgeFinderSync-Info.plist";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@executable_path/../../../../Frameworks",
+				);
+				MARKETING_VERSION = 0.2.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.zipforge.ZipForge.FinderSync;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		A90000000000000000000001 /* Build configuration list for PBXProject "ZipForge" */ = {isa = XCConfigurationList; buildConfigurations = (A80000000000000000000001 /* Debug */, A80000000000000000000002 /* Release */, ); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
+		A90000000000000000000002 /* Build configuration list for PBXNativeTarget "ZipForgeCore" */ = {isa = XCConfigurationList; buildConfigurations = (A80000000000000000000003 /* Debug */, A80000000000000000000004 /* Release */, ); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
+		A90000000000000000000003 /* Build configuration list for PBXNativeTarget "ZipForgeIntegration" */ = {isa = XCConfigurationList; buildConfigurations = (A80000000000000000000005 /* Debug */, A80000000000000000000006 /* Release */, ); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
+		A90000000000000000000004 /* Build configuration list for PBXNativeTarget "ZipForge" */ = {isa = XCConfigurationList; buildConfigurations = (A80000000000000000000007 /* Debug */, A80000000000000000000008 /* Release */, ); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
+		A90000000000000000000005 /* Build configuration list for PBXNativeTarget "ZipForgeFinderSync" */ = {isa = XCConfigurationList; buildConfigurations = (A80000000000000000000009 /* Debug */, A8000000000000000000000A /* Release */, ); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
+/* End XCConfigurationList section */
+	};
+	rootObject = A10000000000000000000001 /* Project object */;
+}

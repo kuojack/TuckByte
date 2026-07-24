@@ -50,7 +50,16 @@ public final class ShellArchiveService: ArchiveService {
             throw ArchiveServiceError.destinationAlreadyExists(destinationURL)
         }
         try fileManager.createDirectory(at: destinationURL, withIntermediateDirectories: true, attributes: nil)
-        _ = try runExecutable(dittoPath, arguments: ["-x", "-k", archiveURL.path, destinationURL.path], currentDirectoryURL: nil)
+        do {
+            _ = try runExecutable(
+                dittoPath,
+                arguments: ["-x", "-k", archiveURL.path, destinationURL.path],
+                currentDirectoryURL: nil
+            )
+        } catch {
+            try? fileManager.removeItem(at: destinationURL)
+            throw error
+        }
     }
 
     public func createZip(from sourceURLs: [URL], destinationURL: URL, settings: CompressionSettings = .standard) throws {

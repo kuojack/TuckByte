@@ -155,6 +155,41 @@ final class ArchiveViewModel: ObservableObject {
         statusMessage = "待壓縮清單已清空。"
     }
 
+    func replacePendingItems(_ urls: [URL]) {
+        archiveURL = nil
+        entries = []
+        pendingItems = urls.map { PendingArchiveItem(url: $0) }
+        errorMessage = nil
+        statusMessage = "已從 Finder 加入 \(pendingItems.count) 個項目。"
+    }
+
+    func beginFinderExtraction(count: Int) {
+        errorMessage = nil
+        isWorking = true
+        statusMessage = "正在背景解壓 \(count) 個 ZIP..."
+    }
+
+    func completeFinderExtraction(_ results: [ArchiveExtractionResult]) {
+        isWorking = false
+        let succeededResults = results.filter(\.succeeded)
+        let failedResults = results.filter { !$0.succeeded }
+
+        if failedResults.isEmpty {
+            if succeededResults.count == 1, let destinationURL = succeededResults.first?.destinationURL {
+                statusMessage = "解壓完成：\(destinationURL.path)"
+            } else {
+                statusMessage = "已完成 \(succeededResults.count) 個 ZIP 的解壓。"
+            }
+            return
+        }
+
+        let failureDetails = failedResults.map {
+            "\($0.archiveURL.lastPathComponent)：\($0.errorDescription ?? "未知錯誤")"
+        }.joined(separator: "\n")
+        errorMessage = "完成 \(succeededResults.count) 個，失敗 \(failedResults.count) 個。\n\(failureDetails)"
+        statusMessage = "背景解壓有 \(failedResults.count) 個項目失敗。"
+    }
+
     func createZipFromPendingItems() {
         guard !pendingItems.isEmpty else {
             errorMessage = "請先把檔案或資料夾拖進待壓縮清單。"

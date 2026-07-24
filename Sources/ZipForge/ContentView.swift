@@ -3,6 +3,8 @@ import ZipForgeCore
 
 struct ContentView: View {
     @ObservedObject var viewModel: ArchiveViewModel
+    @AppStorage("hasShownFinderIntegrationOnboarding")
+    private var hasShownFinderIntegrationOnboarding = false
 
     var body: some View {
         VStack(spacing: 0) {
@@ -32,6 +34,20 @@ struct ContentView: View {
             set: { _ in viewModel.errorMessage = nil }
         )) { alert in
             Alert(title: Text("ZipForge"), message: Text(alert.message), dismissButton: .default(Text("好")))
+        }
+        .sheet(
+            isPresented: Binding(
+                get: { !hasShownFinderIntegrationOnboarding },
+                set: { isPresented in
+                    if !isPresented {
+                        hasShownFinderIntegrationOnboarding = true
+                    }
+                }
+            )
+        ) {
+            FinderIntegrationOnboardingView {
+                hasShownFinderIntegrationOnboarding = true
+            }
         }
     }
 
