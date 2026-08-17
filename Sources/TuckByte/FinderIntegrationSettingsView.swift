@@ -30,7 +30,7 @@ final class FinderIntegrationSettingsModel: ObservableObject {
 
     func setZipBrowsingEnabled(_ enabled: Bool) {
         isUpdatingZipBrowsing = true
-        zipBrowsingStatus = "正在更新 ZIP 預設開啟方式..."
+        zipBrowsingStatus = "正在更新 ZIP／7z 預設開啟方式..."
         zipDefaultApplicationService.setEnabled(enabled) { [weak self] error in
             DispatchQueue.main.async {
                 guard let self = self else { return }
@@ -55,10 +55,10 @@ final class FinderIntegrationSettingsModel: ObservableObject {
         guard !preservingError else { return }
 
         if isZipBrowsingEnabled {
-            zipBrowsingStatus = "雙擊 ZIP 時會使用 TuckByte 瀏覽內容。"
+            zipBrowsingStatus = "雙擊 ZIP 或 7z 時會使用 TuckByte 瀏覽內容。"
         } else if zipDefaultApplicationService.canChangeDefaultApplication {
             zipBrowsingStatus =
-                "目前由 \(zipDefaultApplicationService.currentDefaultApplicationName) 開啟 ZIP。"
+                "目前由 \(zipDefaultApplicationService.currentDefaultApplicationName) 開啟 ZIP／7z。"
         } else {
             zipBrowsingStatus =
                 "請使用打包後的 TuckByte.app 設定此功能。"
@@ -98,7 +98,7 @@ struct FinderIntegrationSettingsView: View {
         Form {
             VStack(alignment: .leading, spacing: 6) {
                 Toggle(
-                    "雙擊 ZIP 時先用 TuckByte 瀏覽",
+                    "雙擊 ZIP／7z 時先用 TuckByte 瀏覽",
                     isOn: Binding(
                         get: { model.isZipBrowsingEnabled },
                         set: model.setZipBrowsingEnabled

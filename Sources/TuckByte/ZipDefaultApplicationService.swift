@@ -4,8 +4,13 @@ import Foundation
 import UniformTypeIdentifiers
 
 final class ZipDefaultApplicationService {
-    private static let previousApplicationURLKey =
+    private static let previousZipApplicationURLKey =
         "zipBrowser.previousDefaultApplicationURL"
+    private static let previousSevenZipApplicationURLKey =
+        "sevenZipBrowser.previousDefaultApplicationURL"
+    private static let sevenZipType = UTType(
+        importedAs: "org.7-zip.7-zip-archive"
+    )
     private static let archiveUtilityURL = URL(
         fileURLWithPath:
             "/System/Library/CoreServices/Applications/Archive Utility.app",
@@ -28,18 +33,29 @@ final class ZipDefaultApplicationService {
     }
 
     var isTuckByteDefaultApplication: Bool {
-        guard let tuckByteBundleIdentifier = Bundle.main.bundleIdentifier,
-              let currentURL = currentDefaultApplicationURL,
-              let currentBundleIdentifier = bundleIdentifier(at: currentURL) else {
+        guard let tuckByteBundleIdentifier = Bundle.main.bundleIdentifier else {
             return false
         }
-        return currentBundleIdentifier == tuckByteBundleIdentifier
+        return archiveTypes.allSatisfy { archiveType in
+            guard let currentURL = currentDefaultApplicationURL(
+                for: archiveType.contentType
+            ) else {
+                return false
+            }
+            return bundleIdentifier(at: currentURL) == tuckByteBundleIdentifier
+        }
     }
 
     var currentDefaultApplicationName: String {
-        currentDefaultApplicationURL?
-            .deletingPathExtension()
-            .lastPathComponent ?? "系統預設程式"
+        let names = archiveTypes.compactMap { archiveType in
+            currentDefaultApplicationURL(for: archiveType.contentType)?
+                .deletingPathExtension()
+                .lastPathComponent
+        }
+        let uniqueNames = Array(Set(names)).sorted()
+        return uniqueNames.isEmpty
+            ? "系統預設程式"
+            : uniqueNames.joined(separator: "、")
     }
 
     func setEnabled(
@@ -52,28 +68,49 @@ final class ZipDefaultApplicationService {
         }
 
         if enabled {
-            rememberCurrentApplication()
-            setDefaultApplication(Bundle.main.bundleURL, completion: completion)
+            rememberCurrentApplications()
+            let requests = archiveTypes.map {
+                (Bundle.main.bundleURL, $0.contentType)
+            }
+            setDefaultApplications(requests, completion: completion)
             return
         }
 
-        setDefaultApplication(restorationApplicationURL) { [weak self] error in
+        let requests = archiveTypes.map {
+            (restorationApplicationURL(forKey: $0.previousApplicationKey), $0.contentType)
+        }
+        setDefaultApplications(requests) { [weak self] error in
             if error == nil {
                 self?.userDefaults.removeObject(
-                    forKey: Self.previousApplicationURLKey
+                    forKey: Self.previousZipApplicationURLKey
+                )
+                self?.userDefaults.removeObject(
+                    forKey: Self.previousSevenZipApplicationURLKey
                 )
             }
             completion(error)
         }
     }
 
-    private var currentDefaultApplicationURL: URL? {
+    private var archiveTypes: [(
+        contentType: UTType,
+        previousApplicationKey: String
+    )] {
+        [
+            (.zip, Self.previousZipApplicationURLKey),
+            (Self.sevenZipType, Self.previousSevenZipApplicationURLKey)
+        ]
+    }
+
+    private func currentDefaultApplicationURL(
+        for contentType: UTType
+    ) -> URL? {
         if #available(macOS 12.0, *) {
-            return workspace.urlForApplication(toOpen: .zip)
+            return workspace.urlForApplication(toOpen: contentType)
         }
 
         guard let handler = LSCopyDefaultRoleHandlerForContentType(
-            UTType.zip.identifier as CFString,
+            contentType.identifier as CFString,
             .all
         )?.takeRetainedValue() else {
             return nil
@@ -83,9 +120,9 @@ final class ZipDefaultApplicationService {
         )
     }
 
-    private var restorationApplicationURL: URL {
+    private func restorationApplicationURL(forKey key: String) -> URL {
         if let storedPath = userDefaults.string(
-            forKey: Self.previousApplicationURLKey
+            forKey: key
         ) {
             let storedURL = URL(fileURLWithPath: storedPath, isDirectory: true)
             if FileManager.default.fileExists(atPath: storedURL.path),
@@ -96,20 +133,49 @@ final class ZipDefaultApplicationService {
         return Self.archiveUtilityURL
     }
 
-    private func rememberCurrentApplication() {
-        guard let tuckByteBundleIdentifier = Bundle.main.bundleIdentifier,
-              let currentURL = currentDefaultApplicationURL,
-              bundleIdentifier(at: currentURL) != tuckByteBundleIdentifier else {
+    private func rememberCurrentApplications() {
+        guard let tuckByteBundleIdentifier = Bundle.main.bundleIdentifier else {
             return
         }
-        userDefaults.set(
-            currentURL.path,
-            forKey: Self.previousApplicationURLKey
-        )
+        for archiveType in archiveTypes {
+            guard let currentURL = currentDefaultApplicationURL(
+                for: archiveType.contentType
+            ), bundleIdentifier(at: currentURL) != tuckByteBundleIdentifier else {
+                continue
+            }
+            userDefaults.set(
+                currentURL.path,
+                forKey: archiveType.previousApplicationKey
+            )
+        }
+    }
+
+    private func setDefaultApplications(
+        _ requests: [(applicationURL: URL, contentType: UTType)],
+        completion: @escaping (Error?) -> Void
+    ) {
+        guard let request = requests.first else {
+            completion(nil)
+            return
+        }
+        setDefaultApplication(
+            request.applicationURL,
+            for: request.contentType
+        ) { error in
+            guard error == nil else {
+                completion(error)
+                return
+            }
+            self.setDefaultApplications(
+                Array(requests.dropFirst()),
+                completion: completion
+            )
+        }
     }
 
     private func setDefaultApplication(
         _ applicationURL: URL,
+        for contentType: UTType,
         completion: @escaping (Error?) -> Void
     ) {
         guard FileManager.default.fileExists(atPath: applicationURL.path) else {
@@ -122,7 +188,7 @@ final class ZipDefaultApplicationService {
         if #available(macOS 12.0, *) {
             workspace.setDefaultApplication(
                 at: applicationURL,
-                toOpen: .zip,
+                toOpen: contentType,
                 completion: completion
             )
             return
@@ -137,7 +203,7 @@ final class ZipDefaultApplicationService {
             return
         }
         let status = LSSetDefaultRoleHandlerForContentType(
-            UTType.zip.identifier as CFString,
+            contentType.identifier as CFString,
             .all,
             bundleIdentifier as CFString
         )
@@ -164,11 +230,11 @@ private enum ZipDefaultApplicationError: LocalizedError {
         case .appBundleRequired:
             return "請先將 TuckByte.app 放進「應用程式」後再設定。"
         case .applicationNotFound(let url):
-            return "找不到要設為 ZIP 預設程式的 App：\(url.path)"
+            return "找不到要設為壓縮檔預設程式的 App：\(url.path)"
         case .missingBundleIdentifier(let url):
             return "無法辨識 App 的 bundle identifier：\(url.path)"
         case .launchServices(let status):
-            return "無法更新 ZIP 預設程式（狀態碼 \(status)）。"
+            return "無法更新壓縮檔預設程式（狀態碼 \(status)）。"
         }
     }
 }

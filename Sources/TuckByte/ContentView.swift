@@ -10,18 +10,11 @@ struct ContentView: View {
         VStack(spacing: 0) {
             toolbar
             Divider()
-            HStack(spacing: 0) {
-                compressionBrowser
-                    .frame(width: 300)
-                    .layoutPriority(2)
-                Divider()
-                entryList
-                    .frame(minWidth: 0, maxWidth: .infinity)
-                    .layoutPriority(1)
-                Divider()
-                compressionOptions
-                    .frame(width: 270)
-                    .layoutPriority(2)
+            switch viewModel.workspaceMode {
+            case .compress:
+                compressionWorkspace
+            case .extract:
+                extractionWorkspace
             }
             Divider()
             statusBar
@@ -53,25 +46,36 @@ struct ContentView: View {
 
     private var toolbar: some View {
         HStack(spacing: 10) {
-            Button(action: viewModel.openArchivePanel) {
-                Label("開啟", systemImage: "folder")
+            Picker("模式", selection: $viewModel.workspaceMode) {
+                ForEach(WorkspaceMode.allCases) { mode in
+                    Text(mode.displayName).tag(mode)
+                }
             }
-            Button(action: viewModel.extractSelectedArchive) {
-                Label("解壓", systemImage: "arrow.down.doc")
+            .pickerStyle(SegmentedPickerStyle())
+            .frame(width: 220)
+
+            Divider()
+                .frame(height: 22)
+
+            if viewModel.workspaceMode == .compress {
+                Button(action: viewModel.addPendingItemsPanel) {
+                    Label("加入檔案", systemImage: "plus")
+                }
+                .disabled(viewModel.isWorking)
+                Button(action: viewModel.clearPendingItems) {
+                    Label("清除", systemImage: "trash")
+                }
+                .disabled(viewModel.pendingItems.isEmpty || viewModel.isWorking)
+            } else {
+                Button(action: viewModel.openArchivePanel) {
+                    Label("開啟壓縮檔", systemImage: "folder")
+                }
+                .disabled(viewModel.isWorking)
+                Button(action: viewModel.extractSelectedArchive) {
+                    Label("全部解壓", systemImage: "arrow.down.doc")
+                }
+                .disabled(!viewModel.hasArchiveLoaded || viewModel.isWorking)
             }
-            .disabled(!viewModel.hasArchiveLoaded || viewModel.isWorking)
-            Button(action: viewModel.wrapSelectedArchive) {
-                Label("再壓縮一層", systemImage: "archivebox.fill")
-            }
-            .disabled(!viewModel.canWrapArchive)
-            Button(action: viewModel.createZipPanel) {
-                Label("建立 ZIP", systemImage: "archivebox")
-            }
-            .disabled(viewModel.isWorking)
-            Button(action: viewModel.createZipFromPendingItems) {
-                Label("壓縮清單", systemImage: "tray.and.arrow.down")
-            }
-            .disabled(!viewModel.canCreatePendingZip)
             Spacer()
             if viewModel.isWorking {
                 ProgressView()
@@ -81,21 +85,51 @@ struct ContentView: View {
         .padding(12)
     }
 
+    private var compressionWorkspace: some View {
+        HStack(spacing: 0) {
+            compressionBrowser
+                .frame(minWidth: 420, maxWidth: .infinity)
+            Divider()
+            compressionOptions
+                .frame(width: 310)
+        }
+        .onDrop(of: ["public.file-url"], isTargeted: nil) { providers in
+            loadDroppedURLs(providers: providers)
+        }
+    }
+
+    private var extractionWorkspace: some View {
+        Group {
+            if viewModel.hasArchiveLoaded {
+                entryList
+            } else {
+                VStack(spacing: 14) {
+                    Image(systemName: "archivebox")
+                        .font(.system(size: 44, weight: .regular))
+                        .foregroundColor(.accentColor)
+                    Text("拖入 ZIP 或 7z")
+                        .font(.title3.weight(.semibold))
+                    Text("也可以使用上方的「開啟壓縮檔」。")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            }
+        }
+        .onDrop(of: ["public.file-url"], isTargeted: nil) { providers in
+            loadDroppedURLs(providers: providers)
+        }
+    }
+
     private var compressionBrowser: some View {
         VStack(spacing: 0) {
             HStack {
-                Text("待壓縮")
+                Text("待壓縮檔案")
                     .font(.headline)
                 Spacer()
-                Button(action: viewModel.addPendingItemsPanel) {
-                    Image(systemName: "plus")
-                }
-                .buttonStyle(PlainButtonStyle())
-                Button(action: viewModel.clearPendingItems) {
-                    Image(systemName: "trash")
-                }
-                .buttonStyle(PlainButtonStyle())
-                .disabled(viewModel.pendingItems.isEmpty)
+                Text("\(viewModel.pendingItems.count) 個項目")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
             }
             .padding(12)
             Divider()
@@ -106,16 +140,13 @@ struct ContentView: View {
                 Text("把檔案或資料夾拖進來")
                     .font(.headline)
                     .multilineTextAlignment(.center)
-                Text("拖入 ZIP 後可解壓或再壓縮一層")
+                Text("拖入壓縮檔時，會把它再包成一層 ZIP。")
                     .font(.caption)
                     .foregroundColor(.secondary)
             }
             .frame(maxWidth: .infinity)
             .padding(.vertical, 18)
             .background(Color(NSColor.controlBackgroundColor))
-            .onDrop(of: ["public.file-url"], isTargeted: nil) { providers in
-                loadDroppedURLs(providers: providers)
-            }
             Divider()
             if viewModel.pendingItems.isEmpty {
                 VStack(spacing: 8) {
@@ -158,8 +189,14 @@ struct ContentView: View {
     private var entryList: some View {
         VStack(alignment: .leading, spacing: 0) {
             HStack {
-                Text("內容")
-                    .font(.headline)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(viewModel.archiveName)
+                        .font(.headline)
+                        .lineLimit(1)
+                    Text(viewModel.selectedFormatDescription)
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
                 Spacer()
                 Text("\(viewModel.visibleEntries.count) 個項目")
                     .font(.caption)
@@ -167,6 +204,26 @@ struct ContentView: View {
             }
             .padding(12)
             Divider()
+            if viewModel.archiveIsEncrypted {
+                HStack(spacing: 10) {
+                    Label(
+                        viewModel.archiveEncryptionMethod.displayName,
+                        systemImage: "lock.fill"
+                    )
+                    .font(.subheadline.weight(.semibold))
+                    SecureField("輸入解壓密碼", text: $viewModel.archivePassword)
+                        .textFieldStyle(RoundedBorderTextFieldStyle())
+                        .frame(width: 220)
+                    Spacer()
+                    Text("解壓全部、單一項目與拖出時使用")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+                .padding(.horizontal, 12)
+                .padding(.vertical, 8)
+                .background(Color(NSColor.controlBackgroundColor))
+                Divider()
+            }
             if viewModel.entries.isEmpty {
                 VStack(spacing: 8) {
                     Image(systemName: "doc.text.magnifyingglass")
@@ -393,15 +450,14 @@ struct ContentView: View {
                     }
 
                     VStack(alignment: .leading, spacing: 8) {
-                        Text("格式")
-                            .font(.caption.weight(.semibold))
-                            .foregroundColor(.secondary)
-                        Picker("", selection: $viewModel.outputFormat) {
-                            ForEach(ArchiveOutputFormat.allCases, id: \.self) { format in
-                                Text(format.displayName).tag(format)
-                            }
+                        HStack {
+                            Text("格式")
+                                .font(.caption.weight(.semibold))
+                                .foregroundColor(.secondary)
+                            Spacer()
+                            Label("ZIP", systemImage: "archivebox")
                         }
-                        Text(viewModel.outputFormat.isSupportedForCreation ? "目前可建立 ZIP。" : "這個格式下一版接 7z/libarchive 後支援。")
+                        Text("目前建立格式固定為 ZIP。")
                             .font(.caption)
                             .foregroundColor(.secondary)
                     }
@@ -433,12 +489,23 @@ struct ContentView: View {
                     }
 
                     VStack(alignment: .leading, spacing: 8) {
-                        Toggle("啟用傳統 ZIP 加密", isOn: $viewModel.isEncryptionEnabled)
-                        SecureField("密碼", text: $viewModel.encryptionPassword)
-                            .disabled(!viewModel.isEncryptionEnabled)
-                        SecureField("再次輸入密碼", text: $viewModel.encryptionPasswordConfirmation)
-                            .disabled(!viewModel.isEncryptionEnabled)
-                        Text("使用系統 zip 的傳統密碼保護，不是 AES。")
+                        Text("加密")
+                            .font(.caption.weight(.semibold))
+                            .foregroundColor(.secondary)
+                        Picker("", selection: $viewModel.encryptionMethod) {
+                            ForEach(ArchiveEncryptionMethod.allCases, id: \.self) { method in
+                                Text(method.displayName).tag(method)
+                            }
+                        }
+                        .labelsHidden()
+                        if viewModel.encryptionMethod != .none {
+                            SecureField("密碼", text: $viewModel.encryptionPassword)
+                            SecureField(
+                                "再次輸入密碼",
+                                text: $viewModel.encryptionPasswordConfirmation
+                            )
+                        }
+                        Text(encryptionHelpText)
                             .font(.caption)
                             .foregroundColor(.secondary)
                     }
@@ -447,13 +514,24 @@ struct ContentView: View {
             }
 
             Divider()
-            Button(action: viewModel.createArchiveFromCurrentContext) {
-                Label(viewModel.currentContextActionTitle, systemImage: "archivebox.fill")
+            Button(action: viewModel.createZipFromPendingItems) {
+                Label("建立 ZIP", systemImage: "archivebox.fill")
                     .frame(maxWidth: .infinity)
             }
-            .disabled(!viewModel.canCreateFromCurrentContext)
+            .disabled(!viewModel.canCreatePendingZip)
             .controlSize(.large)
             .padding(14)
+        }
+    }
+
+    private var encryptionHelpText: String {
+        switch viewModel.encryptionMethod {
+        case .none:
+            return "不使用密碼保護。"
+        case .aes256:
+            return "安全性較高；Windows 建議使用 7-Zip，macOS 可用 TuckByte 解壓。"
+        case .zipCrypto:
+            return "相容性較廣，但安全性較低，不適合敏感資料。"
         }
     }
 

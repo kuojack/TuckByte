@@ -29,8 +29,68 @@ final class ShellArchiveServiceTests: XCTestCase {
         let rarURL = tempDirectory.appendingPathComponent("archive.rar")
         try Data().write(to: rarURL)
         XCTAssertThrowsError(try service.inspect(archiveURL: rarURL)) { error in
-            XCTAssertEqual(error as? ArchiveServiceError, .unsupportedFormat(.rar))
+            XCTAssertEqual(error as? ArchiveServiceError, .unsupportedFormat(.unsupported))
         }
+    }
+
+    func testInspectsAndExtractsSevenZipWithNestedUnicodeContent() throws {
+        let sourceRoot = tempDirectory
+            .appendingPathComponent("SevenZipSource", isDirectory: true)
+        let nestedDirectory = sourceRoot
+            .appendingPathComponent("中文 資料夾", isDirectory: true)
+        try FileManager.default.createDirectory(
+            at: nestedDirectory,
+            withIntermediateDirectories: true,
+            attributes: nil
+        )
+        let filename = "內容 測試.txt"
+        let sourceFileURL = nestedDirectory.appendingPathComponent(filename)
+        try "Seven zip content".data(using: .utf8)!.write(to: sourceFileURL)
+
+        let archiveURL = tempDirectory.appendingPathComponent("測試 Archive.7z")
+        try createSevenZip(
+            sourceName: nestedDirectory.lastPathComponent,
+            from: sourceRoot,
+            destinationURL: archiveURL
+        )
+
+        let entries = try service.inspect(archiveURL: archiveURL)
+        let directoryEntry = try XCTUnwrap(
+            entries.first { $0.path == "中文 資料夾/" }
+        )
+        XCTAssertTrue(directoryEntry.isDirectory)
+        let fileEntry = try XCTUnwrap(
+            entries.first { $0.path == "中文 資料夾/內容 測試.txt" }
+        )
+        XCTAssertEqual(fileEntry.name, filename)
+        XCTAssertEqual(fileEntry.size, 17)
+        XCTAssertNotNil(fileEntry.modifiedAt)
+
+        let destinationURL = tempDirectory
+            .appendingPathComponent("SevenZipExtracted", isDirectory: true)
+        try service.extract(
+            archiveURL: archiveURL,
+            destinationURL: destinationURL
+        )
+        XCTAssertEqual(
+            try String(
+                contentsOf: destinationURL
+                    .appendingPathComponent("中文 資料夾/內容 測試.txt")
+            ),
+            "Seven zip content"
+        )
+
+        let extractedEntryURL = tempDirectory
+            .appendingPathComponent("單獨取出.txt")
+        try service.extractEntry(
+            archiveURL: archiveURL,
+            entry: fileEntry,
+            destinationURL: extractedEntryURL
+        )
+        XCTAssertEqual(
+            try String(contentsOf: extractedEntryURL),
+            "Seven zip content"
+        )
     }
 
     func testCreateInspectAndExtractZipRoundTrip() throws {
@@ -340,16 +400,94 @@ final class ShellArchiveServiceTests: XCTestCase {
         }
     }
 
-    func testUnsupportedCreationFormatReturnsFriendlyError() throws {
-        let sourceURL = tempDirectory.appendingPathComponent("archive-me.txt")
-        try "Format".data(using: .utf8)!.write(to: sourceURL)
+    func testAES256ZipRoundTripAndPasswordErrors() throws {
+        let sourceURL = tempDirectory.appendingPathComponent("機密 文件.txt")
+        try "AES-256 secret".data(using: .utf8)!.write(to: sourceURL)
+        let zipURL = tempDirectory.appendingPathComponent("AES Secret.zip")
+        try service.createZip(
+            from: [sourceURL],
+            destinationURL: zipURL,
+            settings: CompressionSettings(
+                outputFormat: .zip,
+                compressionLevel: 6,
+                encryption: .aes256(password: "correct horse")
+            )
+        )
 
-        let destinationURL = tempDirectory.appendingPathComponent("Archive.7z")
-        let settings = CompressionSettings(outputFormat: .sevenZip, compressionLevel: 6, encryption: .none)
+        XCTAssertEqual(
+            try service.encryptionMethod(archiveURL: zipURL),
+            .aes256
+        )
+        XCTAssertTrue(
+            try service.inspect(archiveURL: zipURL).contains {
+                $0.path == "機密 文件.txt"
+            }
+        )
 
-        XCTAssertThrowsError(try service.createZip(from: [sourceURL], destinationURL: destinationURL, settings: settings)) { error in
-            XCTAssertEqual(error as? ArchiveServiceError, .unsupportedCreationFormat(.sevenZip))
+        let noPasswordDestination = tempDirectory.appendingPathComponent("NoPassword")
+        XCTAssertThrowsError(
+            try service.extract(
+                archiveURL: zipURL,
+                destinationURL: noPasswordDestination,
+                password: nil
+            )
+        ) { error in
+            XCTAssertEqual(error as? ArchiveServiceError, .archivePasswordRequired)
         }
+        XCTAssertFalse(FileManager.default.fileExists(atPath: noPasswordDestination.path))
+
+        let wrongPasswordDestination = tempDirectory.appendingPathComponent("WrongPassword")
+        XCTAssertThrowsError(
+            try service.extract(
+                archiveURL: zipURL,
+                destinationURL: wrongPasswordDestination,
+                password: "wrong"
+            )
+        ) { error in
+            XCTAssertEqual(error as? ArchiveServiceError, .incorrectArchivePassword)
+        }
+        XCTAssertFalse(FileManager.default.fileExists(atPath: wrongPasswordDestination.path))
+
+        let destinationURL = tempDirectory.appendingPathComponent("AES Extracted")
+        try service.extract(
+            archiveURL: zipURL,
+            destinationURL: destinationURL,
+            password: "correct horse"
+        )
+        XCTAssertEqual(
+            try String(contentsOf: destinationURL.appendingPathComponent("機密 文件.txt")),
+            "AES-256 secret"
+        )
+    }
+
+    func testZipCryptoRoundTrip() throws {
+        let sourceURL = tempDirectory.appendingPathComponent("legacy.txt")
+        try "Compatible secret".data(using: .utf8)!.write(to: sourceURL)
+        let zipURL = tempDirectory.appendingPathComponent("Legacy.zip")
+        try service.createZip(
+            from: [sourceURL],
+            destinationURL: zipURL,
+            settings: CompressionSettings(
+                outputFormat: .zip,
+                compressionLevel: 6,
+                encryption: .zipCrypto(password: "legacy-password")
+            )
+        )
+
+        XCTAssertEqual(
+            try service.encryptionMethod(archiveURL: zipURL),
+            .zipCrypto
+        )
+        let destinationURL = tempDirectory.appendingPathComponent("Legacy Extracted")
+        try service.extract(
+            archiveURL: zipURL,
+            destinationURL: destinationURL,
+            password: "legacy-password"
+        )
+        XCTAssertEqual(
+            try String(contentsOf: destinationURL.appendingPathComponent("legacy.txt")),
+            "Compatible secret"
+        )
     }
 
     func testRefusesToOverwriteExistingDestination() throws {
@@ -360,6 +498,33 @@ final class ShellArchiveServiceTests: XCTestCase {
 
         XCTAssertThrowsError(try service.createZip(from: [sourceURL], destinationURL: zipURL)) { error in
             XCTAssertEqual(error as? ArchiveServiceError, .destinationAlreadyExists(zipURL))
+        }
+    }
+
+    private func createSevenZip(
+        sourceName: String,
+        from sourceDirectory: URL,
+        destinationURL: URL
+    ) throws {
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/usr/bin/tar")
+        process.arguments = ["-a", "-cf", destinationURL.path, sourceName]
+        process.currentDirectoryURL = sourceDirectory
+        let outputPipe = Pipe()
+        process.standardOutput = outputPipe
+        process.standardError = outputPipe
+        try process.run()
+        process.waitUntilExit()
+        let output = String(
+            decoding: outputPipe.fileHandleForReading.readDataToEndOfFile(),
+            as: UTF8.self
+        )
+        guard process.terminationStatus == 0 else {
+            throw NSError(
+                domain: "ShellArchiveServiceTests",
+                code: Int(process.terminationStatus),
+                userInfo: [NSLocalizedDescriptionKey: output]
+            )
         }
     }
 }

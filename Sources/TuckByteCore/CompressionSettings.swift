@@ -23,56 +23,48 @@ public struct CompressionSettings: Equatable {
 
 public enum ArchiveOutputFormat: String, CaseIterable, Equatable {
     case zip
-    case sevenZip
-    case rar
-    case tar
 
     public var displayName: String {
-        switch self {
-        case .zip:
-            return "ZIP"
-        case .sevenZip:
-            return "7z"
-        case .rar:
-            return "RAR"
-        case .tar:
-            return "TAR"
-        }
+        "ZIP"
     }
 
     public var fileExtension: String {
-        switch self {
-        case .zip:
-            return "zip"
-        case .sevenZip:
-            return "7z"
-        case .rar:
-            return "rar"
-        case .tar:
-            return "tar"
-        }
+        "zip"
     }
 
     public var isSupportedForCreation: Bool {
-        switch self {
-        case .zip:
-            return true
-        case .sevenZip, .rar, .tar:
-            return false
-        }
+        true
     }
 }
 
 public enum ArchiveEncryption: Equatable {
     case none
     case zipCrypto(password: String)
+    case aes256(password: String)
 
     public var isEnabled: Bool {
         switch self {
         case .none:
             return false
-        case .zipCrypto:
+        case .zipCrypto, .aes256:
             return true
+        }
+    }
+}
+
+public enum ArchiveEncryptionMethod: String, CaseIterable, Equatable {
+    case none
+    case aes256
+    case zipCrypto
+
+    public var displayName: String {
+        switch self {
+        case .none:
+            return "無加密"
+        case .aes256:
+            return "AES-256（推薦）"
+        case .zipCrypto:
+            return "ZipCrypto（相容模式）"
         }
     }
 }

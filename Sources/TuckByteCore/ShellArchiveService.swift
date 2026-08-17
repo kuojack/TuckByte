@@ -6,6 +6,7 @@ public final class ShellArchiveService: ArchiveService {
     private let zipInfoPath = "/usr/bin/zipinfo"
     private let tarPath = "/usr/bin/tar"
     private let dittoPath = "/usr/bin/ditto"
+    private let minizipEngine = MinizipArchiveEngine()
 
     public init(fileManager: FileManager = .default) {
         self.fileManager = fileManager
@@ -14,7 +15,27 @@ public final class ShellArchiveService: ArchiveService {
     public func inspect(archiveURL: URL) throws -> [ArchiveEntry] {
         let preparedArchive = try prepareReadableArchive(archiveURL)
         defer { preparedArchive.removeTemporaryFiles(fileManager: fileManager) }
-        let readableURL = preparedArchive.url
+        let format = ArchiveFormat(fileURL: archiveURL)
+
+        switch format {
+        case .zip, .splitZip:
+            return try inspectZip(
+                readableURL: preparedArchive.url,
+                originalURL: archiveURL,
+                isSplitArchive: format == .splitZip
+            )
+        case .sevenZip:
+            return try inspectSevenZip(archiveURL: preparedArchive.url)
+        case .unsupported:
+            throw ArchiveServiceError.unsupportedFormat(format)
+        }
+    }
+
+    private func inspectZip(
+        readableURL: URL,
+        originalURL: URL,
+        isSplitArchive: Bool
+    ) throws -> [ArchiveEntry] {
 
         let zipInfoResult: CommandResult
         do {
@@ -24,9 +45,9 @@ public final class ShellArchiveService: ArchiveService {
                 currentDirectoryURL: nil
             )
         } catch {
-            if ArchiveFormat(fileURL: archiveURL) == .splitZip {
+            if isSplitArchive {
                 throw ArchiveServiceError.splitArchiveIncompleteOrCorrupt(
-                    archiveURL
+                    originalURL
                 )
             }
             throw error
@@ -43,9 +64,9 @@ public final class ShellArchiveService: ArchiveService {
                 currentDirectoryURL: nil
             )
         } catch {
-            if ArchiveFormat(fileURL: archiveURL) == .splitZip {
+            if isSplitArchive {
                 throw ArchiveServiceError.splitArchiveIncompleteOrCorrupt(
-                    archiveURL
+                    originalURL
                 )
             }
             throw error
@@ -55,9 +76,9 @@ public final class ShellArchiveService: ArchiveService {
             .map(String.init)
 
         guard metadataLines.count == paths.count else {
-            if ArchiveFormat(fileURL: archiveURL) == .splitZip {
+            if isSplitArchive {
                 throw ArchiveServiceError.splitArchiveIncompleteOrCorrupt(
-                    archiveURL
+                    originalURL
                 )
             }
             throw ArchiveServiceError.couldNotParseArchive
@@ -75,9 +96,9 @@ public final class ShellArchiveService: ArchiveService {
             }
 
         if entries.isEmpty {
-            if ArchiveFormat(fileURL: archiveURL) == .splitZip {
+            if isSplitArchive {
                 throw ArchiveServiceError.splitArchiveIncompleteOrCorrupt(
-                    archiveURL
+                    originalURL
                 )
             }
             throw ArchiveServiceError.couldNotParseArchive
@@ -85,22 +106,111 @@ public final class ShellArchiveService: ArchiveService {
         return entries
     }
 
-    public func extract(archiveURL: URL, destinationURL: URL) throws {
+    private func inspectSevenZip(archiveURL: URL) throws -> [ArchiveEntry] {
+        let pathResult = try runExecutable(
+            tarPath,
+            arguments: ["-tf", archiveURL.path],
+            currentDirectoryURL: nil
+        )
+        let metadataResult = try runExecutable(
+            tarPath,
+            arguments: ["-tvf", archiveURL.path],
+            currentDirectoryURL: nil
+        )
+        let paths = pathResult.output
+            .split(whereSeparator: \.isNewline)
+            .map(String.init)
+        let metadataLines = metadataResult.output
+            .split(whereSeparator: \.isNewline)
+            .map(String.init)
+
+        guard paths.count == metadataLines.count else {
+            throw ArchiveServiceError.couldNotParseArchive
+        }
+
+        let entries = zip(metadataLines, paths)
+            .compactMap { metadataLine, path in
+                Self.parseTarListLine(metadataLine, archivePath: path)
+            }
+            .sorted { lhs, rhs in
+                if lhs.isDirectory != rhs.isDirectory {
+                    return lhs.isDirectory
+                }
+                return lhs.path.localizedStandardCompare(rhs.path) == .orderedAscending
+            }
+
+        guard !entries.isEmpty else {
+            throw ArchiveServiceError.couldNotParseArchive
+        }
+        return entries
+    }
+
+    public func encryptionMethod(
+        archiveURL: URL
+    ) throws -> ArchiveEncryptionMethod {
+        let format = ArchiveFormat(fileURL: archiveURL)
+        guard format == .zip || format == .splitZip else {
+            return .none
+        }
         let preparedArchive = try prepareReadableArchive(archiveURL)
         defer { preparedArchive.removeTemporaryFiles(fileManager: fileManager) }
+        return try minizipEngine.encryptionMethod(for: preparedArchive.url)
+    }
+
+    public func extract(archiveURL: URL, destinationURL: URL) throws {
+        try extract(
+            archiveURL: archiveURL,
+            destinationURL: destinationURL,
+            password: nil
+        )
+    }
+
+    public func extract(
+        archiveURL: URL,
+        destinationURL: URL,
+        password: String?
+    ) throws {
+        let preparedArchive = try prepareReadableArchive(archiveURL)
+        defer { preparedArchive.removeTemporaryFiles(fileManager: fileManager) }
+        let format = ArchiveFormat(fileURL: archiveURL)
         if fileManager.fileExists(atPath: destinationURL.path) {
             throw ArchiveServiceError.destinationAlreadyExists(destinationURL)
         }
         try fileManager.createDirectory(at: destinationURL, withIntermediateDirectories: true, attributes: nil)
         do {
-            _ = try runExecutable(
-                dittoPath,
-                arguments: ["-x", "-k", preparedArchive.url.path, destinationURL.path],
-                currentDirectoryURL: nil
-            )
+            switch format {
+            case .zip, .splitZip:
+                let encryption = try minizipEngine.encryptionMethod(
+                    for: preparedArchive.url
+                )
+                if encryption == .none {
+                    _ = try runExecutable(
+                        dittoPath,
+                        arguments: ["-x", "-k", preparedArchive.url.path, destinationURL.path],
+                        currentDirectoryURL: nil
+                    )
+                } else {
+                    guard let password = password, !password.isEmpty else {
+                        throw ArchiveServiceError.archivePasswordRequired
+                    }
+                    try minizipEngine.extract(
+                        archiveURL: preparedArchive.url,
+                        destinationURL: destinationURL,
+                        password: password
+                    )
+                }
+            case .sevenZip:
+                _ = try runExecutable(
+                    tarPath,
+                    arguments: ["-xf", preparedArchive.url.path, "-C", destinationURL.path],
+                    currentDirectoryURL: nil
+                )
+            case .unsupported:
+                throw ArchiveServiceError.unsupportedFormat(format)
+            }
         } catch {
             try? fileManager.removeItem(at: destinationURL)
-            if ArchiveFormat(fileURL: archiveURL) == .splitZip {
+            if format == .splitZip {
                 throw ArchiveServiceError.splitArchiveIncompleteOrCorrupt(
                     archiveURL
                 )
@@ -151,21 +261,29 @@ public final class ShellArchiveService: ArchiveService {
             stagedNames.append(stagedName)
         }
 
-        var arguments = ["-r", "-\(settings.compressionLevel)"]
-        switch settings.encryption {
-        case .none:
-            break
-        case .zipCrypto(let password):
-            guard !password.isEmpty else {
-                throw ArchiveServiceError.encryptionPasswordRequired
-            }
-            arguments += ["-P", password]
-        }
         let generatedArchiveURL = createsSplitArchive
             ? stagingDirectory.appendingPathComponent("Generated.zip")
             : destinationURL
-        arguments += [generatedArchiveURL.path] + stagedNames
-        _ = try runExecutable(zipPath, arguments: arguments, currentDirectoryURL: stagingDirectory)
+        switch settings.encryption {
+        case .none:
+            let arguments = [
+                "-r",
+                "-\(settings.compressionLevel)",
+                generatedArchiveURL.path
+            ] + stagedNames
+            _ = try runExecutable(
+                zipPath,
+                arguments: arguments,
+                currentDirectoryURL: stagingDirectory
+            )
+        case .zipCrypto, .aes256:
+            try minizipEngine.createEncryptedZip(
+                archiveURL: generatedArchiveURL,
+                stagingDirectoryURL: stagingDirectory,
+                compressionLevel: settings.compressionLevel,
+                encryption: settings.encryption
+            )
+        }
 
         if let volumeSizeBytes = settings.volumeSizeBytes {
             try SplitZipArchive.split(
@@ -182,7 +300,7 @@ public final class ShellArchiveService: ArchiveService {
             throw ArchiveServiceError.fileDoesNotExist(archiveURL)
         }
         let format = ArchiveFormat(fileURL: archiveURL)
-        guard format.isSupportedInFirstVersion else {
+        guard format.isSupportedForReading else {
             throw ArchiveServiceError.unsupportedFormat(format)
         }
 
@@ -281,10 +399,62 @@ public final class ShellArchiveService: ArchiveService {
         )
     }
 
+    private static func parseTarListLine(
+        _ line: String,
+        archivePath: String
+    ) -> ArchiveEntry? {
+        let parts = line.split(
+            separator: " ",
+            maxSplits: 8,
+            omittingEmptySubsequences: true
+        )
+        guard parts.count >= 8,
+              let size = Int64(parts[4]) else {
+            return nil
+        }
+
+        let path = archivePath
+        let isDirectory = parts[0].first == "d" || path.hasSuffix("/")
+        let name = URL(fileURLWithPath: path).lastPathComponent
+        let dateText = "\(parts[5]) \(parts[6]) \(parts[7])"
+
+        return ArchiveEntry(
+            name: name.isEmpty
+                ? path.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
+                : name,
+            path: path,
+            size: isDirectory ? nil : size,
+            isDirectory: isDirectory,
+            modifiedAt: tarListDate(from: dateText)
+        )
+    }
+
+    private static func tarListDate(from text: String) -> Date? {
+        if text.contains(":") {
+            let currentYear = Calendar.current.component(.year, from: Date())
+            return tarListTimeFormatter.date(from: "\(text) \(currentYear)")
+        }
+        return tarListYearFormatter.date(from: text)
+    }
+
     private static let zipInfoDateFormatter: DateFormatter = {
         let formatter = DateFormatter()
         formatter.locale = Locale(identifier: "en_US_POSIX")
         formatter.dateFormat = "yyyyMMdd.HHmmss"
+        return formatter
+    }()
+
+    private static let tarListTimeFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.dateFormat = "MMM d HH:mm yyyy"
+        return formatter
+    }()
+
+    private static let tarListYearFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.dateFormat = "MMM d yyyy"
         return formatter
     }()
 

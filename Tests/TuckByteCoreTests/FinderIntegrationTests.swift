@@ -73,16 +73,21 @@ final class FinderIntegrationTests: XCTestCase {
         XCTAssertNil(FinderActionRequest(url: missingFileURL, fileExists: { _ in false }))
     }
 
-    func testFinderMenuPolicyRequiresAllSelectedFilesToBeZipForExtraction() {
+    func testFinderMenuPolicyRequiresAllSelectedFilesToBeSupportedArchives() {
         let firstZip = URL(fileURLWithPath: "/tmp/One.zip")
         let secondZip = URL(fileURLWithPath: "/Volumes/External/Two.ZIP")
+        let sevenZip = URL(fileURLWithPath: "/tmp/資料.7z")
         let firstVolume = URL(fileURLWithPath: "/tmp/Three.zip.001")
         let laterVolume = URL(fileURLWithPath: "/tmp/Three.zip.002")
+        let rar = URL(fileURLWithPath: "/tmp/Archive.rar")
         let textFile = URL(fileURLWithPath: "/tmp/Notes.txt")
 
         XCTAssertTrue(FinderMenuPolicy.canAddToArchive([textFile]))
         XCTAssertTrue(
             FinderMenuPolicy.canExtractHere([firstZip, secondZip], isRegularFile: { _ in true })
+        )
+        XCTAssertTrue(
+            FinderMenuPolicy.canExtractHere([firstZip, sevenZip], isRegularFile: { _ in true })
         )
         XCTAssertTrue(
             FinderMenuPolicy.canExtractHere(
@@ -92,6 +97,9 @@ final class FinderIntegrationTests: XCTestCase {
         )
         XCTAssertFalse(
             FinderMenuPolicy.canExtractHere([firstZip, textFile], isRegularFile: { _ in true })
+        )
+        XCTAssertFalse(
+            FinderMenuPolicy.canExtractHere([rar], isRegularFile: { _ in true })
         )
         XCTAssertFalse(
             FinderMenuPolicy.canExtractHere(

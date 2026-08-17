@@ -9,6 +9,14 @@ public protocol ArchiveService {
         destinationURL: URL
     ) throws
     func createZip(from sourceURLs: [URL], destinationURL: URL, settings: CompressionSettings) throws
+    func encryptionMethod(archiveURL: URL) throws -> ArchiveEncryptionMethod
+    func extract(archiveURL: URL, destinationURL: URL, password: String?) throws
+    func extractEntry(
+        archiveURL: URL,
+        entry: ArchiveEntry,
+        destinationURL: URL,
+        password: String?
+    ) throws
 }
 
 public extension ArchiveService {
@@ -69,6 +77,62 @@ public extension ArchiveService {
     func createZip(from sourceURLs: [URL], destinationURL: URL) throws {
         try createZip(from: sourceURLs, destinationURL: destinationURL, settings: .standard)
     }
+
+    func encryptionMethod(archiveURL: URL) throws -> ArchiveEncryptionMethod {
+        .none
+    }
+
+    func extract(
+        archiveURL: URL,
+        destinationURL: URL,
+        password: String?
+    ) throws {
+        try extract(archiveURL: archiveURL, destinationURL: destinationURL)
+    }
+
+    func extractEntry(
+        archiveURL: URL,
+        entry: ArchiveEntry,
+        destinationURL: URL,
+        password: String?
+    ) throws {
+        let pathComponents = entry.path
+            .split(separator: "/", omittingEmptySubsequences: true)
+            .map(String.init)
+        guard !entry.path.hasPrefix("/"),
+              !pathComponents.isEmpty,
+              pathComponents.allSatisfy({ $0 != "." && $0 != ".." }) else {
+            throw ArchiveServiceError.unsafeArchiveEntry(entry.path)
+        }
+
+        let fileManager = FileManager.default
+        guard !fileManager.fileExists(atPath: destinationURL.path) else {
+            throw ArchiveServiceError.destinationAlreadyExists(destinationURL)
+        }
+        let stagingRoot = fileManager.temporaryDirectory
+            .appendingPathComponent("TuckByte-Entry-\(UUID().uuidString)", isDirectory: true)
+        let extractedRoot = stagingRoot.appendingPathComponent("Extracted", isDirectory: true)
+        try fileManager.createDirectory(at: stagingRoot, withIntermediateDirectories: true)
+        defer { try? fileManager.removeItem(at: stagingRoot) }
+
+        try extract(
+            archiveURL: archiveURL,
+            destinationURL: extractedRoot,
+            password: password
+        )
+        let extractedURL = pathComponents.reduce(extractedRoot) {
+            $0.appendingPathComponent($1)
+        }
+        let standardizedRootPath = extractedRoot.standardizedFileURL.path + "/"
+        let standardizedExtractedURL = extractedURL.standardizedFileURL
+        guard standardizedExtractedURL.path.hasPrefix(standardizedRootPath) else {
+            throw ArchiveServiceError.unsafeArchiveEntry(entry.path)
+        }
+        guard fileManager.fileExists(atPath: standardizedExtractedURL.path) else {
+            throw ArchiveServiceError.archiveEntryNotFound(entry.path)
+        }
+        try fileManager.copyItem(at: standardizedExtractedURL, to: destinationURL)
+    }
 }
 
 public enum ArchiveServiceError: Error, LocalizedError, Equatable {
@@ -81,6 +145,9 @@ public enum ArchiveServiceError: Error, LocalizedError, Equatable {
     case unsafeArchiveEntry(String)
     case archiveEntryNotFound(String)
     case encryptionPasswordRequired
+    case archivePasswordRequired
+    case incorrectArchivePassword
+    case archiveEngineFailed(operation: String, code: Int32)
     case invalidSplitArchiveName(URL)
     case splitArchiveMissingFirstVolume(URL)
     case splitArchiveMissingVolume(URL)
@@ -110,6 +177,12 @@ public enum ArchiveServiceError: Error, LocalizedError, Equatable {
             return "在壓縮檔中找不到項目：\(path)"
         case .encryptionPasswordRequired:
             return "已啟用加密，請輸入密碼。"
+        case .archivePasswordRequired:
+            return "這個 ZIP 已加密，請先輸入密碼。"
+        case .incorrectArchivePassword:
+            return "密碼不正確，或加密 ZIP 已損壞。"
+        case .archiveEngineFailed(let operation, let code):
+            return "\(operation)失敗（錯誤碼 \(code)）。"
         case .invalidSplitArchiveName(let url):
             return "分割壓縮檔名稱必須為名稱.zip.001：\(url.lastPathComponent)"
         case .splitArchiveMissingFirstVolume(let url):

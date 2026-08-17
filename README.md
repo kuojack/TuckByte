@@ -2,15 +2,15 @@
 
 ![TuckByte icon](Resources/AppIcon.png)
 
-TuckByte 是以 SwiftUI 開發的原生 macOS 壓縮工具。目前版本專注於實用的 ZIP 工作流程，包含拖放檔案、瀏覽壓縮檔內容、調整壓縮率、傳統 ZIP 密碼保護，以及 Finder 右鍵整合。
+TuckByte 是以 SwiftUI 開發的原生 macOS 壓縮工具。目前版本可瀏覽及解壓 ZIP／7z，並專注於實用的 ZIP 建立流程，包含拖放檔案、調整壓縮率、AES-256／ZipCrypto 密碼保護，以及 Finder 右鍵整合。
 
-> **開發階段：0.6.0**
+> **開發階段：0.7.0**
 >
 > 目前提供開源測試版與原始碼建置版本。下載版尚未使用 Developer ID
 > 簽章或 Apple notarization，適合了解風險的技術使用者與測試者，不建議
 > 當作正式生產環境版本。
 >
-> GitHub 上目前公開下載版仍為 `v0.3.0`；`0.6.0` 分割 ZIP 功能尚在開發分支，
+> GitHub 上目前公開下載版仍為 `v0.3.0`；`0.7.0` 功能尚在開發分支，
 > 未建立新的 Release。
 
 ## 下載測試版
@@ -24,16 +24,19 @@ SHA-256 後，可在 **系統設定 > 隱私權與安全性** 選擇「仍要打
 
 ## 功能
 
+- 壓縮與解壓縮使用獨立工作區，避免設定與內容列表混在同一畫面
+- 上方分段控制可隨時切換「壓縮」與「解壓縮」模式
 - 將多個檔案與資料夾拖入待壓縮清單
 - 調整 ZIP 壓縮速度與壓縮等級 `0–9`
-- 使用傳統 ZipCrypto 密碼保護
-- 開啟 ZIP 並逐層瀏覽資料夾、名稱、路徑、大小、類型與修改時間
+- ZIP 加密可選 AES-256（推薦）、ZipCrypto（相容模式）或無加密
+- 可辨識加密 ZIP，輸入密碼後解壓全部、單一項目或拖到 Finder
+- 開啟 ZIP 或 7z，逐層瀏覽資料夾、名稱、路徑、大小、類型與修改時間
 - 瀏覽、解壓與建立 `.zip.001`、`.002`、`.003` 連續分卷
-- 可選擇將 TuckByte 設為 ZIP 預設程式，雙擊時先瀏覽而不直接解壓
+- 可選擇將 TuckByte 設為 ZIP／7z 預設程式，雙擊時先瀏覽而不直接解壓
 - 將壓縮檔中的單一檔案或資料夾拖到 Finder 解壓
 - 內容項目右鍵可選擇「解壓此項目」
-- 將 ZIP 解壓到指定資料夾
-- 把既有 ZIP 再包成一層 ZIP
+- 將 ZIP 或 7z 解壓到指定資料夾
+- 把既有 ZIP 或 7z 再包成一層 ZIP
 - Finder 右鍵「TuckByte：加入壓縮並開啟介面」
 - Finder 右鍵「TuckByte：加入壓縮」使用平衡設定原地建立 ZIP
 - Finder 右鍵批次「TuckByte：解壓縮至此」
@@ -45,13 +48,19 @@ SHA-256 後，可在 **系統設定 > 隱私權與安全性** 選擇「仍要打
 
 | 格式 | 瀏覽 | 解壓 | 建立 | 加密 |
 | --- | --- | --- | --- | --- |
-| ZIP | 支援 | 支援 | 支援 | 傳統 ZipCrypto |
-| 分割 ZIP (`.zip.001`) | 支援 | 支援 | 支援 | 傳統 ZipCrypto |
-| 7z | 尚未支援 | 尚未支援 | 尚未支援 | 尚未支援 |
-| RAR | 尚未支援 | 尚未支援 | 尚未支援 | 尚未支援 |
-| TAR/GZ | 尚未支援 | 尚未支援 | 尚未支援 | 不適用 |
+| ZIP | 支援 | 支援 | 支援 | AES-256、ZipCrypto |
+| 分割 ZIP (`.zip.001`) | 支援 | 支援 | 支援 | AES-256、ZipCrypto |
+| 7z | 支援 | 支援 | 不支援 | 不支援 |
 
-介面中的 7z、RAR 與 TAR 選項是後續壓縮引擎的產品預留項目，目前不會假裝建立成功。
+建立壓縮檔的格式選單目前只有 ZIP。7z 使用 macOS 內建 `bsdtar/libarchive`
+讀取；目前不支援加密 7z、建立 7z 或分割 7z。
+
+AES-256 使用 WinZip AES 規格，安全性高於 ZipCrypto。Windows 建議使用
+7-Zip 等支援 AES ZIP 的工具；Windows 檔案總管與 macOS 封存工具程式不保證
+能解開 AES ZIP。ZipCrypto 相容性較廣，但不適合保護敏感資料。
+
+在「壓縮」模式拖入 ZIP 或 7z，會將該壓縮檔當成一般來源，再包成一層 ZIP；
+在「解壓縮」模式拖入 ZIP 或 7z，則會開啟內容瀏覽器。
 
 ## 系統需求
 
@@ -102,10 +111,10 @@ dist/TuckByte.dmg
 
 一般檔案或資料夾會顯示：
 
-- 「TuckByte：加入壓縮並開啟介面」：載入選取項目，讓使用者調整格式、壓縮率與密碼。
+- 「TuckByte：加入壓縮並開啟介面」：載入選取項目，讓使用者調整 ZIP 壓縮率、分卷與密碼。
 - 「TuckByte：加入壓縮」：不開介面，直接使用 ZIP 等級 6、無加密在原位置壓縮。
-- 「TuckByte：解壓縮至此」：所有選取項目都是 `.zip` 或 `.zip.001`
-  系列分卷時顯示。同時選取同組多個分卷只會解壓一次。
+- 「TuckByte：解壓縮至此」：所有選取項目都是 `.zip`、`.7z` 或
+  `.zip.001` 系列分卷時顯示。同時選取同組多個分卷只會解壓一次。
 
 直接壓縮單一檔案或資料夾時使用項目名稱，多選時使用所在資料夾名稱。既有 ZIP
 會建立為 `名稱-外層.zip`；目的地已存在時依序使用 `名稱 2.zip`、`名稱 3.zip`。
@@ -123,18 +132,18 @@ dist/TuckByte.dmg
 右鍵「加入壓縮」的背景快速模式仍建立普通 ZIP；要建立分卷請使用
 「加入壓縮並開啟介面」。
 
-## ZIP 雙擊瀏覽
+## ZIP／7z 雙擊瀏覽
 
 將 App 放進 `/Applications` 後，開啟 **TuckByte > 設定**，啟用
-「雙擊 ZIP 時先用 TuckByte 瀏覽」。macOS 可能會要求確認變更預設程式；
-完成後，在 Finder 雙擊 `.zip` 會開啟 TuckByte 的內容列表。
+「雙擊 ZIP／7z 時先用 TuckByte 瀏覽」。macOS 可能會要求確認變更預設程式；
+完成後，在 Finder 雙擊 `.zip` 或 `.7z` 會開啟 TuckByte 的內容列表。
 
-關閉此設定時，TuckByte 會恢復啟用前的 ZIP 處理程式；若原處理程式無法取得，
-則恢復 macOS 的「封存工具程式」。TuckByte 只以 `Viewer` 身分宣告 ZIP 支援，
-單純安裝 App 不會自動搶走預設程式。
+關閉此設定時，TuckByte 會分別恢復啟用前的 ZIP 與 7z 處理程式；若原處理程式
+無法取得，則恢復 macOS 的「封存工具程式」。TuckByte 只以 `Viewer` 身分宣告
+支援，單純安裝 App 不會自動搶走預設程式。
 
-瀏覽 ZIP 時，雙擊資料夾可逐層進入，並可用上一層按鈕或路徑導覽返回。即使
-ZIP 沒有保存獨立的資料夾條目，TuckByte 也會依檔案路徑重建目錄層級。
+瀏覽 ZIP 或 7z 時，雙擊資料夾可逐層進入，並可用上一層按鈕或路徑導覽返回。
+即使壓縮檔沒有保存獨立的資料夾條目，TuckByte 也會依檔案路徑重建目錄層級。
 
 內容列表中的單一檔案或資料夾可拖到 Finder，也可在該項目上按右鍵並選擇
 「解壓此項目...」。目的地已有同名項目時不會覆蓋。
@@ -149,19 +158,20 @@ TuckByte
 └── TuckByteFinderSync       Finder Sync Extension
 ```
 
-核心透過 Foundation `Process` 呼叫 macOS 內建工具：
+核心使用內嵌的 minizip-ng 與 Foundation `Process` 呼叫 macOS 內建工具：
 
 | 系統工具 | 用途 |
 | --- | --- |
-| `/usr/bin/zip` | 建立 ZIP、壓縮等級與 ZipCrypto |
+| minizip-ng 4.0.10 | 建立 AES-256／ZipCrypto ZIP、辨識加密方式與密碼解壓 |
+| `/usr/bin/zip` | 建立無加密 ZIP與壓縮等級 |
 | `/usr/bin/zipinfo` | 讀取 ZIP 項目大小、日期與類型 |
-| `/usr/bin/tar` | 取得壓縮檔中的完整路徑 |
+| `/usr/bin/tar` | 取得完整路徑，並瀏覽及解壓 7z |
 | `/usr/bin/ditto` | 解壓 ZIP |
 
 `.zip.001` 分卷的切割與重組由 TuckByte 以 Foundation 串流讀寫實作，
 不依賴額外第三方元件。
 
-專案沒有 SwiftPM 第三方套件，也沒有內嵌 7-Zip、RAR、Keka、libarchive 或 Info-ZIP 二進位。上述命令由使用者的 macOS 系統提供，詳細說明請參考 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。
+專案沒有外部 SwiftPM 套件，也沒有內嵌 7-Zip、RAR、Keka、libarchive 或 Info-ZIP 二進位。minizip-ng 原始碼以 zlib License 內嵌並由專案直接編譯；上述命令則由使用者的 macOS 系統提供。詳細說明請參考 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。
 
 ## 隱私與安全
 
@@ -169,8 +179,9 @@ TuckByte
 - 分割 ZIP 瀏覽與解壓會先在系統暫存目錄重組完整 ZIP，需要足夠的可用磁碟空間，完成後會刪除。
 - TuckByte 不包含分析、追蹤、廣告或網路上傳功能。
 - Finder Extension 只傳送本機檔案路徑給主 App。
-- 目前密碼功能使用 `/usr/bin/zip -P`，屬於較弱的傳統 ZipCrypto，不是 AES。
-- 密碼會短暫出現在本機程序參數中；不要將此版本用於高度敏感資料。
+- AES-256 與 ZipCrypto 密碼由 App 直接傳給內嵌引擎，不會放在 shell 程序參數。
+- TuckByte 不儲存密碼；關閉或重新開啟壓縮檔後需要再次輸入。
+- 加密 7z 目前無法輸入密碼，因此不在支援範圍內。
 - 請謹慎處理來源不明或不受信任的壓縮檔。
 
 ## 授權
@@ -186,8 +197,8 @@ TuckByte 是獨立開發專案，與 Apple、7-Zip、RARLAB、Keka 或其他壓�
 ## Roadmap
 
 - 以原生壓縮引擎取代 shell 工具
-- 7z、TAR/GZ 與更多解壓格式
-- AES 加密與安全密碼傳遞
+- TAR/GZ 與更多解壓格式
+- 加密 7z 的密碼輸入與解壓
 - 壓縮進度、取消與工作佇列
 - Developer ID 簽章與 notarization
 - 正式版本更新機制

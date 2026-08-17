@@ -16,10 +16,10 @@ struct TuckByteApp: App {
         WindowGroup {
             ContentView(viewModel: viewModel)
                 .frame(
-                    minWidth: 960,
-                    idealWidth: 1280,
-                    minHeight: 600,
-                    idealHeight: 720
+                    minWidth: 780,
+                    idealWidth: 1080,
+                    minHeight: 520,
+                    idealHeight: 680
                 )
                 .onOpenURL { url in
                     if url.isFileURL {

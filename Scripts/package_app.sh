@@ -12,7 +12,7 @@ EXTENSION_DIR="$APP_DIR/Contents/PlugIns/TuckByteFinderSync.appex"
 SWIFT_CONCURRENCY_LIBRARY="$APP_DIR/Contents/Frameworks/libswift_Concurrency.dylib"
 ICONSET_DIR="$DIST_DIR/AppIcon.iconset"
 ICON_SOURCE="$ROOT_DIR/Resources/AppIcon.png"
-VERSION="${TUCKBYTE_VERSION:-0.6.0}"
+VERSION="${TUCKBYTE_VERSION:-0.7.0}"
 BUILD_NUMBER="${TUCKBYTE_BUILD_NUMBER:-1}"
 
 cd "$ROOT_DIR"
@@ -31,6 +31,9 @@ rm -rf "$APP_DIR" "$ICONSET_DIR"
 mkdir -p "$DIST_DIR" "$ICONSET_DIR"
 cp -R "$BUILT_APP_DIR" "$APP_DIR"
 mkdir -p "$RESOURCES_DIR"
+mkdir -p "$RESOURCES_DIR/ThirdPartyLicenses"
+cp "$ROOT_DIR/ThirdParty/minizip-ng/LICENSE" \
+    "$RESOURCES_DIR/ThirdPartyLicenses/minizip-ng.txt"
 
 if [[ ! -f "$ICON_SOURCE" ]]; then
     echo "App icon source was not found at $ICON_SOURCE" >&2

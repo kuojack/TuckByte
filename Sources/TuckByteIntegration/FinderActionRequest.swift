@@ -75,10 +75,11 @@ public enum FinderMenuPolicy {
     }
 
     public static func isExtractableArchiveURL(_ url: URL) -> Bool {
-        if url.pathExtension.lowercased() == "zip" {
+        let fileExtension = url.pathExtension.lowercased()
+        if fileExtension == "zip" || fileExtension == "7z" {
             return true
         }
-        let volumeExtension = url.pathExtension
+        let volumeExtension = fileExtension
         return volumeExtension.count == 3
             && volumeExtension.allSatisfy(\.isNumber)
             && (Int(volumeExtension) ?? 0) > 0

@@ -81,7 +81,7 @@ final class FinderNotificationService {
         if results.count == 1, let result = results.first, let destinationURL = result.destinationURL {
             content.body = "\(result.archiveURL.lastPathComponent) 已解壓到 \(destinationURL.path)"
         } else {
-            content.body = "已完成 \(results.count) 個 ZIP 的解壓。"
+            content.body = "已完成 \(results.count) 個壓縮檔的解壓。"
         }
         content.sound = .default
 
