@@ -76,16 +76,59 @@ final class FinderIntegrationTests: XCTestCase {
     func testFinderMenuPolicyRequiresAllSelectedFilesToBeZipForExtraction() {
         let firstZip = URL(fileURLWithPath: "/tmp/One.zip")
         let secondZip = URL(fileURLWithPath: "/Volumes/External/Two.ZIP")
+        let firstVolume = URL(fileURLWithPath: "/tmp/Three.zip.001")
+        let laterVolume = URL(fileURLWithPath: "/tmp/Three.zip.002")
         let textFile = URL(fileURLWithPath: "/tmp/Notes.txt")
 
         XCTAssertTrue(FinderMenuPolicy.canAddToArchive([textFile]))
         XCTAssertTrue(
             FinderMenuPolicy.canExtractHere([firstZip, secondZip], isRegularFile: { _ in true })
         )
+        XCTAssertTrue(
+            FinderMenuPolicy.canExtractHere(
+                [firstVolume, laterVolume],
+                isRegularFile: { _ in true }
+            )
+        )
         XCTAssertFalse(
             FinderMenuPolicy.canExtractHere([firstZip, textFile], isRegularFile: { _ in true })
         )
+        XCTAssertFalse(
+            FinderMenuPolicy.canExtractHere(
+                [URL(fileURLWithPath: "/tmp/Invalid.zip.000")],
+                isRegularFile: { _ in true }
+            )
+        )
         XCTAssertFalse(FinderMenuPolicy.canExtractHere([]))
+    }
+
+    func testBatchExtractionDeduplicatesSelectedSplitVolumes() throws {
+        let service = ShellArchiveService()
+        let sourceURL = tempDirectory.appendingPathComponent("payload.bin")
+        try Data((0..<4_096).map { UInt8($0 % 251) }).write(to: sourceURL)
+        let firstVolumeURL = tempDirectory
+            .appendingPathComponent("Payload.zip.001")
+        try service.createZip(
+            from: [sourceURL],
+            destinationURL: firstVolumeURL,
+            settings: CompressionSettings(
+                outputFormat: .zip,
+                compressionLevel: 0,
+                encryption: .none,
+                volumeSizeBytes: 512
+            )
+        )
+        let volumeURLs = try SplitZipArchive.volumeURLs(
+            startingAt: firstVolumeURL
+        )
+        XCTAssertGreaterThan(volumeURLs.count, 1)
+
+        let extractor = ArchiveBatchExtractor(archiveService: service)
+        let results = extractor.extractHere(volumeURLs)
+
+        XCTAssertEqual(results.count, 1)
+        XCTAssertTrue(results[0].succeeded)
+        XCTAssertEqual(results[0].destinationURL?.lastPathComponent, "Payload")
     }
 
     func testBatchExtractionUsesNumberedDestinationAndContinuesAfterFailure() throws {

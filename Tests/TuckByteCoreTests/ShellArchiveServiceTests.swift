@@ -92,6 +92,77 @@ final class ShellArchiveServiceTests: XCTestCase {
         XCTAssertTrue(entries.contains { $0.path == "fast.txt" })
     }
 
+    func testCreatesInspectsAndExtractsZipDot001Volumes() throws {
+        let filename = "分割測試.bin"
+        let originalData = Data((0..<8_192).map { UInt8($0 % 251) })
+        let sourceURL = tempDirectory.appendingPathComponent(filename)
+        try originalData.write(to: sourceURL)
+
+        let firstVolumeURL = tempDirectory
+            .appendingPathComponent("Archive.zip.001")
+        let settings = CompressionSettings(
+            outputFormat: .zip,
+            compressionLevel: 0,
+            encryption: .none,
+            volumeSizeBytes: 1_024
+        )
+        try service.createZip(
+            from: [sourceURL],
+            destinationURL: firstVolumeURL,
+            settings: settings
+        )
+
+        let volumeURLs = try SplitZipArchive.volumeURLs(
+            startingAt: firstVolumeURL
+        )
+        XCTAssertGreaterThan(volumeURLs.count, 1)
+
+        let entries = try service.inspect(archiveURL: volumeURLs[1])
+        XCTAssertTrue(entries.contains { $0.path == filename })
+
+        let destinationURL = tempDirectory
+            .appendingPathComponent("SplitExtracted", isDirectory: true)
+        try service.extract(
+            archiveURL: firstVolumeURL,
+            destinationURL: destinationURL
+        )
+        XCTAssertEqual(
+            try Data(contentsOf: destinationURL.appendingPathComponent(filename)),
+            originalData
+        )
+    }
+
+    func testSplitZipMissingLastVolumeReturnsFriendlyError() throws {
+        let sourceURL = tempDirectory.appendingPathComponent("payload.bin")
+        try Data((0..<4_096).map { UInt8($0 % 251) }).write(to: sourceURL)
+        let firstVolumeURL = tempDirectory
+            .appendingPathComponent("Incomplete.zip.001")
+        try service.createZip(
+            from: [sourceURL],
+            destinationURL: firstVolumeURL,
+            settings: CompressionSettings(
+                outputFormat: .zip,
+                compressionLevel: 0,
+                encryption: .none,
+                volumeSizeBytes: 512
+            )
+        )
+        let volumeURLs = try SplitZipArchive.volumeURLs(
+            startingAt: firstVolumeURL
+        )
+        XCTAssertGreaterThan(volumeURLs.count, 1)
+        try FileManager.default.removeItem(at: try XCTUnwrap(volumeURLs.last))
+
+        XCTAssertThrowsError(
+            try service.inspect(archiveURL: firstVolumeURL)
+        ) { error in
+            XCTAssertEqual(
+                error as? ArchiveServiceError,
+                .splitArchiveIncompleteOrCorrupt(firstVolumeURL)
+            )
+        }
+    }
+
     func testPreservesUnicodeFilenameWhenCreatingInspectingAndExtracting() throws {
         let filename = "index 可框選區域.html"
         let sourceURL = tempDirectory.appendingPathComponent(filename)

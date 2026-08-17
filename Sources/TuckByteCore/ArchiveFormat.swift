@@ -2,6 +2,7 @@ import Foundation
 
 public enum ArchiveFormat: String, Equatable {
     case zip
+    case splitZip
     case tar
     case gzip
     case sevenZip
@@ -10,7 +11,9 @@ public enum ArchiveFormat: String, Equatable {
 
     public init(fileURL: URL) {
         let name = fileURL.lastPathComponent.lowercased()
-        if name.hasSuffix(".zip") {
+        if SplitZipArchive.isVolumeURL(fileURL) {
+            self = .splitZip
+        } else if name.hasSuffix(".zip") {
             self = .zip
         } else if name.hasSuffix(".tar") {
             self = .tar
@@ -29,6 +32,8 @@ public enum ArchiveFormat: String, Equatable {
         switch self {
         case .zip:
             return "ZIP"
+        case .splitZip:
+            return "分割 ZIP"
         case .tar:
             return "TAR"
         case .gzip:
@@ -43,6 +48,6 @@ public enum ArchiveFormat: String, Equatable {
     }
 
     public var isSupportedInFirstVersion: Bool {
-        self == .zip
+        self == .zip || self == .splitZip
     }
 }

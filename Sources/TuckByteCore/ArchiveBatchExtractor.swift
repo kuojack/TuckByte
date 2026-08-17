@@ -29,7 +29,7 @@ public final class ArchiveBatchExtractor {
     }
 
     public func extractHere(_ archiveURLs: [URL]) -> [ArchiveExtractionResult] {
-        archiveURLs.map { archiveURL in
+        canonicalArchiveURLs(archiveURLs).map { archiveURL in
             let destinationURL = availableDestination(for: archiveURL)
             do {
                 try archiveService.extract(
@@ -53,7 +53,9 @@ public final class ArchiveBatchExtractor {
 
     public func availableDestination(for archiveURL: URL) -> URL {
         let parentURL = archiveURL.deletingLastPathComponent()
-        let baseName = archiveURL.deletingPathExtension().lastPathComponent
+        let logicalArchiveURL = SplitZipArchive.logicalArchiveURL(for: archiveURL)
+            ?? archiveURL
+        let baseName = logicalArchiveURL.deletingPathExtension().lastPathComponent
         let initialURL = parentURL.appendingPathComponent(baseName, isDirectory: true)
         guard fileManager.fileExists(atPath: initialURL.path) else {
             return initialURL
@@ -67,6 +69,19 @@ public final class ArchiveBatchExtractor {
                 return candidateURL
             }
             suffix += 1
+        }
+    }
+
+    private func canonicalArchiveURLs(_ archiveURLs: [URL]) -> [URL] {
+        var seenPaths = Set<String>()
+        return archiveURLs.compactMap { archiveURL in
+            let canonicalURL = SplitZipArchive.firstVolumeURL(for: archiveURL)
+                ?? archiveURL
+            let standardizedURL = canonicalURL.standardizedFileURL
+            guard seenPaths.insert(standardizedURL.path).inserted else {
+                return nil
+            }
+            return standardizedURL
         }
     }
 }

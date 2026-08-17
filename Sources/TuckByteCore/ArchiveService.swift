@@ -81,6 +81,12 @@ public enum ArchiveServiceError: Error, LocalizedError, Equatable {
     case unsafeArchiveEntry(String)
     case archiveEntryNotFound(String)
     case encryptionPasswordRequired
+    case invalidSplitArchiveName(URL)
+    case splitArchiveMissingFirstVolume(URL)
+    case splitArchiveMissingVolume(URL)
+    case splitArchiveIncompleteOrCorrupt(URL)
+    case invalidSplitVolumeSize
+    case tooManySplitVolumes
     case commandFailed(command: String, status: Int32, output: String)
     case couldNotParseArchive
 
@@ -104,6 +110,18 @@ public enum ArchiveServiceError: Error, LocalizedError, Equatable {
             return "在壓縮檔中找不到項目：\(path)"
         case .encryptionPasswordRequired:
             return "已啟用加密，請輸入密碼。"
+        case .invalidSplitArchiveName(let url):
+            return "分割壓縮檔名稱必須為名稱.zip.001：\(url.lastPathComponent)"
+        case .splitArchiveMissingFirstVolume(let url):
+            return "找不到分割壓縮檔的第一卷：\(url.lastPathComponent)"
+        case .splitArchiveMissingVolume(let url):
+            return "分割壓縮檔缺少分卷：\(url.lastPathComponent)"
+        case .splitArchiveIncompleteOrCorrupt(let url):
+            return "無法讀取分割壓縮檔，可能缺少最後一卷或檔案已損壞：\(url.lastPathComponent)"
+        case .invalidSplitVolumeSize:
+            return "分卷大小必須大於 0。"
+        case .tooManySplitVolumes:
+            return "分割壓縮檔超過 999 卷，請選擇較大的分卷大小。"
         case .commandFailed(let command, let status, let output):
             return "\(command) 執行失敗（狀態碼 \(status)）：\(output)"
         case .couldNotParseArchive:

@@ -358,73 +358,103 @@ struct ContentView: View {
     }
 
     private var compressionOptions: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Text("壓縮設定")
-                .font(.headline)
+        VStack(spacing: 0) {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 16) {
+                    Text("壓縮設定")
+                        .font(.headline)
 
-            VStack(alignment: .leading, spacing: 8) {
-                Text("速度")
-                    .font(.caption.weight(.semibold))
-                    .foregroundColor(.secondary)
-                Picker("", selection: $viewModel.compressionSpeed) {
-                    ForEach(CompressionSpeed.allCases) { speed in
-                        Text(speed.displayName).tag(speed)
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("速度")
+                            .font(.caption.weight(.semibold))
+                            .foregroundColor(.secondary)
+                        Picker("", selection: $viewModel.compressionSpeed) {
+                            ForEach(CompressionSpeed.allCases) { speed in
+                                Text(speed.displayName).tag(speed)
+                            }
+                        }
+                        .pickerStyle(SegmentedPickerStyle())
+                    }
+
+                    VStack(alignment: .leading, spacing: 8) {
+                        HStack {
+                            Text("壓縮率")
+                                .font(.caption.weight(.semibold))
+                                .foregroundColor(.secondary)
+                            Spacer()
+                            Text("\(Int(viewModel.compressionLevel.rounded())) / 9")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        }
+                        Slider(value: $viewModel.compressionLevel, in: 0...9, step: 1)
+                        Text("0 最快但較大，9 最小但較慢。")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("格式")
+                            .font(.caption.weight(.semibold))
+                            .foregroundColor(.secondary)
+                        Picker("", selection: $viewModel.outputFormat) {
+                            ForEach(ArchiveOutputFormat.allCases, id: \.self) { format in
+                                Text(format.displayName).tag(format)
+                            }
+                        }
+                        Text(viewModel.outputFormat.isSupportedForCreation ? "目前可建立 ZIP。" : "這個格式下一版接 7z/libarchive 後支援。")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+
+                    VStack(alignment: .leading, spacing: 8) {
+                        Toggle("分割壓縮檔", isOn: $viewModel.isSplitArchiveEnabled)
+                            .disabled(viewModel.outputFormat != .zip)
+                        if viewModel.isSplitArchiveEnabled {
+                            Picker("每卷大小", selection: $viewModel.splitVolumeSizePreset) {
+                                ForEach(SplitVolumeSizePreset.allCases) { preset in
+                                    Text(preset.displayName).tag(preset)
+                                }
+                            }
+                            if viewModel.splitVolumeSizePreset == .custom {
+                                HStack(spacing: 8) {
+                                    TextField(
+                                        "大小",
+                                        text: $viewModel.customSplitVolumeSizeMB
+                                    )
+                                    .textFieldStyle(RoundedBorderTextFieldStyle())
+                                    Text("MB")
+                                        .foregroundColor(.secondary)
+                                }
+                            }
+                            Text("輸出為 .zip.001、.002、.003 連續分卷。")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        }
+                    }
+
+                    VStack(alignment: .leading, spacing: 8) {
+                        Toggle("啟用傳統 ZIP 加密", isOn: $viewModel.isEncryptionEnabled)
+                        SecureField("密碼", text: $viewModel.encryptionPassword)
+                            .disabled(!viewModel.isEncryptionEnabled)
+                        SecureField("再次輸入密碼", text: $viewModel.encryptionPasswordConfirmation)
+                            .disabled(!viewModel.isEncryptionEnabled)
+                        Text("使用系統 zip 的傳統密碼保護，不是 AES。")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
                     }
                 }
-                .pickerStyle(SegmentedPickerStyle())
+                .padding(14)
             }
 
-            VStack(alignment: .leading, spacing: 8) {
-                HStack {
-                    Text("壓縮率")
-                        .font(.caption.weight(.semibold))
-                        .foregroundColor(.secondary)
-                    Spacer()
-                    Text("\(Int(viewModel.compressionLevel.rounded())) / 9")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                }
-                Slider(value: $viewModel.compressionLevel, in: 0...9, step: 1)
-                Text("0 最快但較大，9 最小但較慢。")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-            }
-
-            VStack(alignment: .leading, spacing: 8) {
-                Text("格式")
-                    .font(.caption.weight(.semibold))
-                    .foregroundColor(.secondary)
-                Picker("", selection: $viewModel.outputFormat) {
-                    ForEach(ArchiveOutputFormat.allCases, id: \.self) { format in
-                        Text(format.displayName).tag(format)
-                    }
-                }
-                Text(viewModel.outputFormat.isSupportedForCreation ? "目前可建立 ZIP。" : "這個格式下一版接 7z/libarchive 後支援。")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-            }
-
-            VStack(alignment: .leading, spacing: 8) {
-                Toggle("啟用傳統 ZIP 加密", isOn: $viewModel.isEncryptionEnabled)
-                SecureField("密碼", text: $viewModel.encryptionPassword)
-                    .disabled(!viewModel.isEncryptionEnabled)
-                SecureField("再次輸入密碼", text: $viewModel.encryptionPasswordConfirmation)
-                    .disabled(!viewModel.isEncryptionEnabled)
-                Text("初版使用系統 zip 的傳統密碼保護，不是 AES。")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-            }
-
-            Spacer()
-
+            Divider()
             Button(action: viewModel.createArchiveFromCurrentContext) {
                 Label(viewModel.currentContextActionTitle, systemImage: "archivebox.fill")
                     .frame(maxWidth: .infinity)
             }
             .disabled(!viewModel.canCreateFromCurrentContext)
             .controlSize(.large)
+            .padding(14)
         }
-        .padding(14)
     }
 
     private func loadDroppedURLs(providers: [NSItemProvider]) -> Bool {

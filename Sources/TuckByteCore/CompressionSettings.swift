@@ -4,15 +4,18 @@ public struct CompressionSettings: Equatable {
     public var outputFormat: ArchiveOutputFormat
     public var compressionLevel: Int
     public var encryption: ArchiveEncryption
+    public var volumeSizeBytes: Int64?
 
     public init(
         outputFormat: ArchiveOutputFormat = .zip,
         compressionLevel: Int = 6,
-        encryption: ArchiveEncryption = .none
+        encryption: ArchiveEncryption = .none,
+        volumeSizeBytes: Int64? = nil
     ) {
         self.outputFormat = outputFormat
         self.compressionLevel = min(9, max(0, compressionLevel))
         self.encryption = encryption
+        self.volumeSizeBytes = volumeSizeBytes
     }
 
     public static let standard = CompressionSettings()

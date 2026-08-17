@@ -15,6 +15,9 @@ final class ArchiveViewModel: ObservableObject {
         }
     }
     @Published var outputFormat: ArchiveOutputFormat = .zip
+    @Published var isSplitArchiveEnabled = false
+    @Published var splitVolumeSizePreset: SplitVolumeSizePreset = .hundredMB
+    @Published var customSplitVolumeSizeMB = "100"
     @Published var isEncryptionEnabled = false
     @Published var encryptionPassword = ""
     @Published var encryptionPasswordConfirmation = ""
@@ -77,7 +80,7 @@ final class ArchiveViewModel: ObservableObject {
         panel.allowsMultipleSelection = false
         panel.canChooseFiles = true
         panel.canChooseDirectories = false
-        panel.allowedFileTypes = ["zip", "7z", "rar", "tar", "gz", "tgz"]
+        panel.allowedFileTypes = ["zip", "001", "7z", "rar", "tar", "gz", "tgz"]
         if panel.runModal() == .OK, let url = panel.url {
             loadArchive(url)
         }
@@ -120,8 +123,8 @@ final class ArchiveViewModel: ObservableObject {
 
     func openDocumentURL(_ url: URL) {
         guard url.isFileURL else { return }
-        guard ArchiveFormat(fileURL: url) == .zip else {
-            errorMessage = "目前只能瀏覽 ZIP 壓縮檔。"
+        guard ArchiveFormat(fileURL: url).isSupportedInFirstVersion else {
+            errorMessage = "目前只能瀏覽 ZIP 或 .zip.001 分割壓縮檔。"
             statusMessage = errorMessage ?? "操作失敗。"
             return
         }
@@ -147,7 +150,10 @@ final class ArchiveViewModel: ObservableObject {
             return
         }
         guard let folderURL = panel.url else { return }
-        let destinationURL = folderURL.appendingPathComponent(archiveURL.deletingPathExtension().lastPathComponent, isDirectory: true)
+        let destinationURL = folderURL.appendingPathComponent(
+            archiveBaseName(for: archiveURL),
+            isDirectory: true
+        )
         perform("正在解壓到 \(destinationURL.lastPathComponent)...") {
             try self.archiveService.extract(archiveURL: archiveURL, destinationURL: destinationURL)
             DispatchQueue.main.async {
@@ -277,10 +283,10 @@ final class ArchiveViewModel: ObservableObject {
         openPanel.allowsMultipleSelection = true
         openPanel.prompt = "選擇"
         guard openPanel.runModal() == .OK else { return }
+        guard compressionOptionsAreValid else { return }
 
         let savePanel = NSSavePanel()
-        savePanel.allowedFileTypes = ["zip"]
-        savePanel.nameFieldStringValue = "Archive.zip"
+        configureSavePanel(savePanel, baseName: "Archive")
         guard savePanel.runModal() == .OK, let destinationURL = savePanel.url else { return }
 
         perform("正在建立 \(destinationURL.lastPathComponent)...") {
@@ -391,8 +397,7 @@ final class ArchiveViewModel: ObservableObject {
         guard compressionOptionsAreValid else { return }
 
         let savePanel = NSSavePanel()
-        savePanel.allowedFileTypes = [outputFormat.fileExtension]
-        savePanel.nameFieldStringValue = "Archive.\(outputFormat.fileExtension)"
+        configureSavePanel(savePanel, baseName: "Archive")
         guard savePanel.runModal() == .OK, let destinationURL = savePanel.url else { return }
 
         perform("正在以目前設定建立 \(destinationURL.lastPathComponent)...") {
@@ -417,20 +422,28 @@ final class ArchiveViewModel: ObservableObject {
         guard compressionOptionsAreValid else { return }
 
         let savePanel = NSSavePanel()
-        savePanel.allowedFileTypes = [outputFormat.fileExtension]
-        savePanel.nameFieldStringValue = "\(sourceArchiveURL.deletingPathExtension().lastPathComponent)-外層.\(outputFormat.fileExtension)"
+        configureSavePanel(
+            savePanel,
+            baseName: "\(archiveBaseName(for: sourceArchiveURL))-外層"
+        )
         guard savePanel.runModal() == .OK, let destinationURL = savePanel.url else { return }
 
         perform("正在把 \(sourceArchiveURL.lastPathComponent) 再壓縮一層...") {
-            try self.createZip(from: [sourceArchiveURL], destinationURL: destinationURL)
+            let sourceURLs = ArchiveFormat(fileURL: sourceArchiveURL) == .splitZip
+                ? try SplitZipArchive.volumeURLs(startingAt: sourceArchiveURL)
+                : [sourceArchiveURL]
+            try self.createZip(from: sourceURLs, destinationURL: destinationURL)
         }
     }
 
     func createZipFromDroppedItems(_ urls: [URL]) {
         guard !urls.isEmpty else { return }
+        guard compressionOptionsAreValid else { return }
         let savePanel = NSSavePanel()
-        savePanel.allowedFileTypes = ["zip"]
-        savePanel.nameFieldStringValue = defaultArchiveName(for: urls)
+        configureSavePanel(
+            savePanel,
+            baseName: defaultArchiveBaseName(for: urls)
+        )
         guard savePanel.runModal() == .OK, let destinationURL = savePanel.url else { return }
 
         perform("正在建立 \(destinationURL.lastPathComponent)...") {
@@ -455,21 +468,33 @@ final class ArchiveViewModel: ObservableObject {
     }
 
     private func createZip(from sourceURLs: [URL], destinationURL: URL) throws {
-        try self.archiveService.createZip(from: sourceURLs, destinationURL: destinationURL, settings: currentCompressionSettings)
+        let settings = currentCompressionSettings
+        try self.archiveService.createZip(
+            from: sourceURLs,
+            destinationURL: destinationURL,
+            settings: settings
+        )
         let loadedEntries = try self.archiveService.inspect(archiveURL: destinationURL)
         DispatchQueue.main.async {
             self.archiveURL = destinationURL
             self.entries = loadedEntries
             self.currentArchiveDirectoryPath = ""
-            self.statusMessage = "已建立 ZIP：\(destinationURL.path)"
+            self.statusMessage = settings.volumeSizeBytes != nil
+                ? "已建立分割 ZIP：\(destinationURL.path)"
+                : "已建立 ZIP：\(destinationURL.path)"
         }
     }
 
-    private func defaultArchiveName(for urls: [URL]) -> String {
+    private func defaultArchiveBaseName(for urls: [URL]) -> String {
         if urls.count == 1 {
-            return "\(urls[0].deletingPathExtension().lastPathComponent).zip"
+            let sourceURL = urls[0]
+            if ArchiveFormat(fileURL: sourceURL) == .splitZip {
+                return archiveBaseName(for: sourceURL)
+            }
+            let name = sourceURL.deletingPathExtension().lastPathComponent
+            return name.isEmpty ? "Archive" : name
         }
-        return "Archive.zip"
+        return "Archive"
     }
 
     private var currentCompressionSettings: CompressionSettings {
@@ -483,8 +508,22 @@ final class ArchiveViewModel: ObservableObject {
         return CompressionSettings(
             outputFormat: outputFormat,
             compressionLevel: Int(compressionLevel.rounded()),
-            encryption: encryption
+            encryption: encryption,
+            volumeSizeBytes: splitVolumeSizeBytes
         )
+    }
+
+    private var splitVolumeSizeBytes: Int64? {
+        guard isSplitArchiveEnabled else { return nil }
+        if let presetBytes = splitVolumeSizePreset.volumeSizeBytes {
+            return presetBytes
+        }
+        guard let megabytes = Int64(customSplitVolumeSizeMB), megabytes > 0 else {
+            return nil
+        }
+        return megabytes.multipliedReportingOverflow(by: 1_048_576).overflow
+            ? nil
+            : megabytes * 1_048_576
     }
 
     private var encryptionInputsAreValid: Bool {
@@ -502,7 +541,39 @@ final class ArchiveViewModel: ObservableObject {
             statusMessage = errorMessage ?? "操作失敗。"
             return false
         }
+        if isSplitArchiveEnabled {
+            guard outputFormat == .zip else {
+                errorMessage = "分割壓縮檔目前只支援 ZIP 格式。"
+                statusMessage = errorMessage ?? "操作失敗。"
+                return false
+            }
+            guard let volumeSizeBytes = splitVolumeSizeBytes,
+                  volumeSizeBytes >= 1_048_576 else {
+                errorMessage = "自訂分卷大小必須是大於或等於 1 的整數 MB。"
+                statusMessage = errorMessage ?? "操作失敗。"
+                return false
+            }
+        }
         return true
+    }
+
+    private func configureSavePanel(
+        _ savePanel: NSSavePanel,
+        baseName: String
+    ) {
+        let suffix = isSplitArchiveEnabled
+            ? "zip.001"
+            : outputFormat.fileExtension
+        savePanel.allowedFileTypes = [isSplitArchiveEnabled ? "001" : suffix]
+        savePanel.nameFieldStringValue = "\(baseName).\(suffix)"
+        savePanel.isExtensionHidden = false
+    }
+
+    private func archiveBaseName(for archiveURL: URL) -> String {
+        let logicalURL = SplitZipArchive.logicalArchiveURL(for: archiveURL)
+            ?? archiveURL
+        let baseName = logicalURL.deletingPathExtension().lastPathComponent
+        return baseName.isEmpty ? "Archive" : baseName
     }
 
     private func perform(_ message: String, work: @escaping () throws -> Void) {
@@ -585,6 +656,46 @@ enum CompressionSpeed: String, CaseIterable, Identifiable {
             return 6
         case .smallest:
             return 9
+        }
+    }
+}
+
+enum SplitVolumeSizePreset: String, CaseIterable, Identifiable {
+    case tenMB
+    case hundredMB
+    case oneGB
+    case fourGB
+    case custom
+
+    var id: String { rawValue }
+
+    var displayName: String {
+        switch self {
+        case .tenMB:
+            return "10 MB"
+        case .hundredMB:
+            return "100 MB"
+        case .oneGB:
+            return "1 GB"
+        case .fourGB:
+            return "4 GB"
+        case .custom:
+            return "自訂"
+        }
+    }
+
+    var volumeSizeBytes: Int64? {
+        switch self {
+        case .tenMB:
+            return 10 * 1_048_576
+        case .hundredMB:
+            return 100 * 1_048_576
+        case .oneGB:
+            return 1_024 * 1_048_576
+        case .fourGB:
+            return 4_096 * 1_048_576
+        case .custom:
+            return nil
         }
     }
 }

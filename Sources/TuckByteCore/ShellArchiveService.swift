@@ -12,18 +12,54 @@ public final class ShellArchiveService: ArchiveService {
     }
 
     public func inspect(archiveURL: URL) throws -> [ArchiveEntry] {
-        try validateReadableArchive(archiveURL)
-        let zipInfoResult = try runExecutable(zipInfoPath, arguments: ["-l", "-T", archiveURL.path], currentDirectoryURL: nil)
+        let preparedArchive = try prepareReadableArchive(archiveURL)
+        defer { preparedArchive.removeTemporaryFiles(fileManager: fileManager) }
+        let readableURL = preparedArchive.url
+
+        let zipInfoResult: CommandResult
+        do {
+            zipInfoResult = try runExecutable(
+                zipInfoPath,
+                arguments: ["-l", "-T", readableURL.path],
+                currentDirectoryURL: nil
+            )
+        } catch {
+            if ArchiveFormat(fileURL: archiveURL) == .splitZip {
+                throw ArchiveServiceError.splitArchiveIncompleteOrCorrupt(
+                    archiveURL
+                )
+            }
+            throw error
+        }
         let metadataLines = zipInfoResult.output
             .split(whereSeparator: \.isNewline)
             .map(String.init)
             .filter(Self.isZipInfoEntryLine)
-        let pathResult = try runExecutable(tarPath, arguments: ["-tf", archiveURL.path], currentDirectoryURL: nil)
+        let pathResult: CommandResult
+        do {
+            pathResult = try runExecutable(
+                tarPath,
+                arguments: ["-tf", readableURL.path],
+                currentDirectoryURL: nil
+            )
+        } catch {
+            if ArchiveFormat(fileURL: archiveURL) == .splitZip {
+                throw ArchiveServiceError.splitArchiveIncompleteOrCorrupt(
+                    archiveURL
+                )
+            }
+            throw error
+        }
         let paths = pathResult.output
             .split(whereSeparator: \.isNewline)
             .map(String.init)
 
         guard metadataLines.count == paths.count else {
+            if ArchiveFormat(fileURL: archiveURL) == .splitZip {
+                throw ArchiveServiceError.splitArchiveIncompleteOrCorrupt(
+                    archiveURL
+                )
+            }
             throw ArchiveServiceError.couldNotParseArchive
         }
 
@@ -39,13 +75,19 @@ public final class ShellArchiveService: ArchiveService {
             }
 
         if entries.isEmpty {
+            if ArchiveFormat(fileURL: archiveURL) == .splitZip {
+                throw ArchiveServiceError.splitArchiveIncompleteOrCorrupt(
+                    archiveURL
+                )
+            }
             throw ArchiveServiceError.couldNotParseArchive
         }
         return entries
     }
 
     public func extract(archiveURL: URL, destinationURL: URL) throws {
-        try validateReadableArchive(archiveURL)
+        let preparedArchive = try prepareReadableArchive(archiveURL)
+        defer { preparedArchive.removeTemporaryFiles(fileManager: fileManager) }
         if fileManager.fileExists(atPath: destinationURL.path) {
             throw ArchiveServiceError.destinationAlreadyExists(destinationURL)
         }
@@ -53,11 +95,16 @@ public final class ShellArchiveService: ArchiveService {
         do {
             _ = try runExecutable(
                 dittoPath,
-                arguments: ["-x", "-k", archiveURL.path, destinationURL.path],
+                arguments: ["-x", "-k", preparedArchive.url.path, destinationURL.path],
                 currentDirectoryURL: nil
             )
         } catch {
             try? fileManager.removeItem(at: destinationURL)
+            if ArchiveFormat(fileURL: archiveURL) == .splitZip {
+                throw ArchiveServiceError.splitArchiveIncompleteOrCorrupt(
+                    archiveURL
+                )
+            }
             throw error
         }
     }
@@ -74,8 +121,19 @@ public final class ShellArchiveService: ArchiveService {
                 throw ArchiveServiceError.fileDoesNotExist(sourceURL)
             }
         }
-        if fileManager.fileExists(atPath: destinationURL.path) {
+        let createsSplitArchive = settings.volumeSizeBytes != nil
+        if !createsSplitArchive && fileManager.fileExists(atPath: destinationURL.path) {
             throw ArchiveServiceError.destinationAlreadyExists(destinationURL)
+        }
+        if createsSplitArchive {
+            guard let volumeSizeBytes = settings.volumeSizeBytes,
+                  volumeSizeBytes > 0 else {
+                throw ArchiveServiceError.invalidSplitVolumeSize
+            }
+            guard SplitZipArchive.firstVolumeURL(for: destinationURL)?.standardizedFileURL
+                    == destinationURL.standardizedFileURL else {
+                throw ArchiveServiceError.invalidSplitArchiveName(destinationURL)
+            }
         }
 
         let stagingDirectory = fileManager.temporaryDirectory
@@ -103,17 +161,61 @@ public final class ShellArchiveService: ArchiveService {
             }
             arguments += ["-P", password]
         }
-        arguments += [destinationURL.path] + stagedNames
+        let generatedArchiveURL = createsSplitArchive
+            ? stagingDirectory.appendingPathComponent("Generated.zip")
+            : destinationURL
+        arguments += [generatedArchiveURL.path] + stagedNames
         _ = try runExecutable(zipPath, arguments: arguments, currentDirectoryURL: stagingDirectory)
+
+        if let volumeSizeBytes = settings.volumeSizeBytes {
+            try SplitZipArchive.split(
+                archiveURL: generatedArchiveURL,
+                firstVolumeURL: destinationURL,
+                volumeSizeBytes: volumeSizeBytes,
+                fileManager: fileManager
+            )
+        }
     }
 
-    private func validateReadableArchive(_ archiveURL: URL) throws {
+    private func prepareReadableArchive(_ archiveURL: URL) throws -> PreparedArchive {
         guard fileManager.fileExists(atPath: archiveURL.path) else {
             throw ArchiveServiceError.fileDoesNotExist(archiveURL)
         }
         let format = ArchiveFormat(fileURL: archiveURL)
         guard format.isSupportedInFirstVersion else {
             throw ArchiveServiceError.unsupportedFormat(format)
+        }
+
+        guard format == .splitZip else {
+            return PreparedArchive(url: archiveURL, temporaryRootURL: nil)
+        }
+
+        let temporaryRootURL = fileManager.temporaryDirectory
+            .appendingPathComponent(
+                "TuckByte-Split-\(UUID().uuidString)",
+                isDirectory: true
+            )
+        try fileManager.createDirectory(
+            at: temporaryRootURL,
+            withIntermediateDirectories: true,
+            attributes: nil
+        )
+        do {
+            let logicalName = SplitZipArchive.logicalArchiveURL(for: archiveURL)?
+                .lastPathComponent ?? "Archive.zip"
+            let assembledURL = temporaryRootURL.appendingPathComponent(logicalName)
+            try SplitZipArchive.assemble(
+                startingAt: archiveURL,
+                destinationURL: assembledURL,
+                fileManager: fileManager
+            )
+            return PreparedArchive(
+                url: assembledURL,
+                temporaryRootURL: temporaryRootURL
+            )
+        } catch {
+            try? fileManager.removeItem(at: temporaryRootURL)
+            throw error
         }
     }
 
@@ -208,4 +310,14 @@ public final class ShellArchiveService: ArchiveService {
 private struct CommandResult {
     let output: String
     let status: Int32
+}
+
+private struct PreparedArchive {
+    let url: URL
+    let temporaryRootURL: URL?
+
+    func removeTemporaryFiles(fileManager: FileManager) {
+        guard let temporaryRootURL = temporaryRootURL else { return }
+        try? fileManager.removeItem(at: temporaryRootURL)
+    }
 }

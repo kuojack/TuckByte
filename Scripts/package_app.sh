@@ -12,7 +12,7 @@ EXTENSION_DIR="$APP_DIR/Contents/PlugIns/TuckByteFinderSync.appex"
 SWIFT_CONCURRENCY_LIBRARY="$APP_DIR/Contents/Frameworks/libswift_Concurrency.dylib"
 ICONSET_DIR="$DIST_DIR/AppIcon.iconset"
 ICON_SOURCE="$ROOT_DIR/Resources/AppIcon.png"
-VERSION="${TUCKBYTE_VERSION:-0.5.0}"
+VERSION="${TUCKBYTE_VERSION:-0.6.0}"
 BUILD_NUMBER="${TUCKBYTE_BUILD_NUMBER:-1}"
 
 cd "$ROOT_DIR"

@@ -29,6 +29,7 @@
 		A60000000000000000000014 /* ArchiveInPlaceCompressor.swift in Sources */ = {isa = PBXBuildFile; fileRef = A50000000000000000000018 /* ArchiveInPlaceCompressor.swift */; };
 		A60000000000000000000015 /* ZipDefaultApplicationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A50000000000000000000019 /* ZipDefaultApplicationService.swift */; };
 		A60000000000000000000016 /* ArchiveDirectoryBrowser.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5000000000000000000001A /* ArchiveDirectoryBrowser.swift */; };
+		A60000000000000000000017 /* SplitZipArchive.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5000000000000000000001B /* SplitZipArchive.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -79,6 +80,7 @@
 		A50000000000000000000018 /* ArchiveInPlaceCompressor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ArchiveInPlaceCompressor.swift; sourceTree = "<group>"; };
 		A50000000000000000000019 /* ZipDefaultApplicationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ZipDefaultApplicationService.swift; sourceTree = "<group>"; };
 		A5000000000000000000001A /* ArchiveDirectoryBrowser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ArchiveDirectoryBrowser.swift; sourceTree = "<group>"; };
+		A5000000000000000000001B /* SplitZipArchive.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SplitZipArchive.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -147,6 +149,7 @@
 				A50000000000000000000004 /* ArchiveService.swift */,
 				A50000000000000000000005 /* CompressionSettings.swift */,
 				A50000000000000000000006 /* ShellArchiveService.swift */,
+				A5000000000000000000001B /* SplitZipArchive.swift */,
 			);
 			path = TuckByteCore;
 			sourceTree = "<group>";
@@ -324,6 +327,7 @@
 				A60000000000000000000004 /* ArchiveService.swift in Sources */,
 				A60000000000000000000005 /* CompressionSettings.swift in Sources */,
 				A60000000000000000000006 /* ShellArchiveService.swift in Sources */,
+				A60000000000000000000017 /* SplitZipArchive.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -448,7 +452,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MARKETING_VERSION = 0.5.0;
+				MARKETING_VERSION = 0.6.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.kuojack.TuckByte;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
@@ -468,7 +472,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MARKETING_VERSION = 0.5.0;
+				MARKETING_VERSION = 0.6.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.kuojack.TuckByte;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
@@ -490,7 +494,7 @@
 					"@executable_path/../Frameworks",
 					"@executable_path/../../../../Frameworks",
 				);
-				MARKETING_VERSION = 0.5.0;
+				MARKETING_VERSION = 0.6.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.kuojack.TuckByte.FinderSync;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
@@ -513,7 +517,7 @@
 					"@executable_path/../Frameworks",
 					"@executable_path/../../../../Frameworks",
 				);
-				MARKETING_VERSION = 0.5.0;
+				MARKETING_VERSION = 0.6.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.kuojack.TuckByte.FinderSync;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;

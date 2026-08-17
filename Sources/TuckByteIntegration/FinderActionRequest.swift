@@ -70,7 +70,18 @@ public enum FinderMenuPolicy {
         }
     ) -> Bool {
         !selectedURLs.isEmpty && selectedURLs.allSatisfy {
-            isRegularFile($0) && $0.pathExtension.lowercased() == "zip"
+            isRegularFile($0) && isExtractableArchiveURL($0)
         }
+    }
+
+    public static func isExtractableArchiveURL(_ url: URL) -> Bool {
+        if url.pathExtension.lowercased() == "zip" {
+            return true
+        }
+        let volumeExtension = url.pathExtension
+        return volumeExtension.count == 3
+            && volumeExtension.allSatisfy(\.isNumber)
+            && (Int(volumeExtension) ?? 0) > 0
+            && url.deletingPathExtension().pathExtension.lowercased() == "zip"
     }
 }
