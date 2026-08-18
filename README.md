@@ -12,13 +12,16 @@ Argon2id + AES-256-GCM、加密索引、單項隨機存取與直接串流分卷�
 > 簽章或 Apple notarization，適合了解風險的技術使用者與測試者，不建議
 > 當作正式生產環境版本。
 >
-> GitHub 上目前公開下載版仍為 `v0.3.0`；`0.8.0` 功能尚在開發分支，
-> 未建立新的 Release。
+> GitHub 上目前公開測試版為 [`v0.8.0`](https://github.com/kuojack/TuckByte/releases/tag/v0.8.0)，
+> 並標示為 Pre-release。
 
 ## 下載測試版
 
-請從 [GitHub Releases](https://github.com/kuojack/TuckByte/releases) 下載
-`TuckByte.dmg`，並使用同一個 Release 提供的 SHA-256 檔案驗證下載內容。
+請從 [TuckByte v0.8.0 Release](https://github.com/kuojack/TuckByte/releases/tag/v0.8.0)
+下載 [`TuckByte.dmg`](https://github.com/kuojack/TuckByte/releases/download/v0.8.0/TuckByte.dmg)，
+並使用同一個 Release 提供的
+[`TuckByte.dmg.sha256`](https://github.com/kuojack/TuckByte/releases/download/v0.8.0/TuckByte.dmg.sha256)
+驗證下載內容。
 
 由於測試版尚未經 Apple 公證，macOS 可能阻擋第一次開啟。確認下載來源及
 SHA-256 後，可在 **系統設定 > 隱私權與安全性** 選擇「仍要打開」。請勿
