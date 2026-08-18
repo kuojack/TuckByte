@@ -3,6 +3,7 @@ import Foundation
 public struct FinderActionRequest: Equatable {
     public enum Operation: String, Equatable {
         case addToArchive
+        case compressHere
         case extractHere
     }
 
@@ -69,7 +70,21 @@ public enum FinderMenuPolicy {
         }
     ) -> Bool {
         !selectedURLs.isEmpty && selectedURLs.allSatisfy {
-            isRegularFile($0) && $0.pathExtension.lowercased() == "zip"
+            isRegularFile($0) && isExtractableArchiveURL($0)
         }
+    }
+
+    public static func isExtractableArchiveURL(_ url: URL) -> Bool {
+        let fileExtension = url.pathExtension.lowercased()
+        if fileExtension == "zip" || fileExtension == "tuck" || fileExtension == "7z" {
+            return true
+        }
+        let volumeExtension = fileExtension
+        return volumeExtension.count == 3
+            && volumeExtension.allSatisfy(\.isNumber)
+            && (Int(volumeExtension) ?? 0) > 0
+            && ["zip", "tuck"].contains(
+                url.deletingPathExtension().pathExtension.lowercased()
+            )
     }
 }

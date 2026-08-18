@@ -1,10 +1,13 @@
 import AppKit
 import Foundation
 import TuckByteCore
+import UniformTypeIdentifiers
 
 final class ArchiveViewModel: ObservableObject {
+    @Published var workspaceMode: WorkspaceMode = .compress
     @Published var archiveURL: URL?
     @Published var entries: [ArchiveEntry] = []
+    @Published var currentArchiveDirectoryPath = ""
     @Published var pendingItems: [PendingArchiveItem] = []
     @Published var compressionLevel: Double = 6
     @Published var compressionSpeed: CompressionSpeed = .balanced {
@@ -12,15 +15,28 @@ final class ArchiveViewModel: ObservableObject {
             compressionLevel = Double(compressionSpeed.defaultCompressionLevel)
         }
     }
-    @Published var outputFormat: ArchiveOutputFormat = .zip
-    @Published var isEncryptionEnabled = false
+    @Published var outputFormat: ArchiveOutputFormat = .zip {
+        didSet {
+            if outputFormat == .tuck && encryptionMethod == .zipCrypto {
+                encryptionMethod = .aes256
+            }
+        }
+    }
+    @Published var isSplitArchiveEnabled = false
+    @Published var splitVolumeSizePreset: SplitVolumeSizePreset = .hundredMB
+    @Published var customSplitVolumeSizeMB = "100"
+    @Published var encryptionMethod: ArchiveEncryptionMethod = .none
     @Published var encryptionPassword = ""
     @Published var encryptionPasswordConfirmation = ""
-    @Published var statusMessage = "拖放 ZIP 檔或使用工具列開始。"
+    @Published var archiveEncryptionMethod: ArchiveEncryptionMethod = .none
+    @Published var archivePassword = ""
+    @Published var statusMessage = "拖放 .tuck、ZIP 或 7z 檔，或使用工具列開始。"
     @Published var errorMessage: String?
     @Published var isWorking = false
+    @Published var operationProgress: ArchiveOperation.Snapshot?
 
     private let archiveService: ArchiveService
+    private var currentOperation: ArchiveOperation?
 
     init(archiveService: ArchiveService = ShellArchiveService()) {
         self.archiveService = archiveService
@@ -31,7 +47,7 @@ final class ArchiveViewModel: ObservableObject {
     }
 
     var selectedFormatDescription: String {
-        guard let archiveURL = archiveURL else { return "ZIP 初版" }
+        guard let archiveURL = archiveURL else { return outputFormat.displayName }
         return ArchiveFormat(fileURL: archiveURL).displayName
     }
 
@@ -39,20 +55,37 @@ final class ArchiveViewModel: ObservableObject {
         archiveURL != nil
     }
 
+    var archiveIsEncrypted: Bool {
+        archiveEncryptionMethod != .none
+    }
+
+    var archiveIndexRequiresUnlock: Bool {
+        guard archiveIsEncrypted, entries.isEmpty, let archiveURL = archiveURL else { return false }
+        let format = ArchiveFormat(fileURL: archiveURL)
+        return format == .tuck || format == .splitTuck
+    }
+
+    var availableEncryptionMethods: [ArchiveEncryptionMethod] {
+        outputFormat == .tuck ? [.none, .aes256] : ArchiveEncryptionMethod.allCases
+    }
+
+    var visibleEntries: [ArchiveEntry] {
+        ArchiveDirectoryBrowser.entries(
+            in: currentArchiveDirectoryPath,
+            from: entries
+        )
+    }
+
+    var archiveBreadcrumbs: [ArchiveBreadcrumb] {
+        ArchiveDirectoryBrowser.breadcrumbs(for: currentArchiveDirectoryPath)
+    }
+
+    var canNavigateUpArchiveDirectory: Bool {
+        !currentArchiveDirectoryPath.isEmpty
+    }
+
     var canCreatePendingZip: Bool {
         !pendingItems.isEmpty && !isWorking
-    }
-
-    var canWrapArchive: Bool {
-        hasArchiveLoaded && !isWorking
-    }
-
-    var canCreateFromCurrentContext: Bool {
-        canCreatePendingZip || canWrapArchive
-    }
-
-    var currentContextActionTitle: String {
-        pendingItems.isEmpty && hasArchiveLoaded ? "再壓縮一層" : "建立壓縮檔"
     }
 
     func openArchivePanel() {
@@ -60,7 +93,7 @@ final class ArchiveViewModel: ObservableObject {
         panel.allowsMultipleSelection = false
         panel.canChooseFiles = true
         panel.canChooseDirectories = false
-        panel.allowedFileTypes = ["zip", "7z", "rar", "tar", "gz", "tgz"]
+        panel.allowedFileTypes = ["tuck", "zip", "001", "7z"]
         if panel.runModal() == .OK, let url = panel.url {
             loadArchive(url)
         }
@@ -68,18 +101,91 @@ final class ArchiveViewModel: ObservableObject {
 
     func loadArchive(_ url: URL) {
         perform("正在讀取 \(url.lastPathComponent)...") {
-            let loadedEntries = try self.archiveService.inspect(archiveURL: url)
+            let encryptionMethod = try self.archiveService.encryptionMethod(
+                archiveURL: url
+            )
+            let format = ArchiveFormat(fileURL: url)
+            let indexIsEncrypted = encryptionMethod != .none
+                && (format == .tuck || format == .splitTuck)
+            let loadedEntries = indexIsEncrypted
+                ? []
+                : try self.archiveService.inspect(archiveURL: url)
             DispatchQueue.main.async {
+                self.workspaceMode = .extract
                 self.archiveURL = url
                 self.entries = loadedEntries
-                self.statusMessage = "已讀取 \(loadedEntries.count) 個項目。"
+                self.currentArchiveDirectoryPath = ""
+                self.archiveEncryptionMethod = encryptionMethod
+                self.archivePassword = ""
+                self.statusMessage = indexIsEncrypted
+                    ? "索引已加密；請輸入密碼後解鎖內容清單。"
+                    : encryptionMethod == .none
+                    ? "已讀取 \(loadedEntries.count) 個項目。"
+                    : "已讀取 \(loadedEntries.count) 個項目，解壓時需要密碼。"
             }
         }
     }
 
+    func unlockArchiveIndex() {
+        guard let archiveURL = archiveURL else { return }
+        guard !archivePassword.isEmpty else {
+            errorMessage = ArchiveServiceError.archivePasswordRequired.errorDescription
+            statusMessage = errorMessage ?? "操作失敗。"
+            return
+        }
+        perform("正在解鎖加密索引...") {
+            let loadedEntries = try self.archiveService.inspect(
+                archiveURL: archiveURL,
+                password: self.archivePassword
+            )
+            DispatchQueue.main.async {
+                self.entries = loadedEntries
+                self.currentArchiveDirectoryPath = ""
+                self.statusMessage = "已解鎖並讀取 \(loadedEntries.count) 個項目。"
+            }
+        }
+    }
+
+    func openArchiveDirectory(_ entry: ArchiveEntry) {
+        guard entry.isDirectory,
+              let directoryPath = ArchiveDirectoryBrowser.canonicalDirectoryPath(entry.path) else {
+            return
+        }
+        currentArchiveDirectoryPath = directoryPath
+        statusMessage = "正在瀏覽：\(directoryPath)"
+    }
+
+    func navigateToArchiveDirectory(_ directoryPath: String) {
+        guard let canonicalPath = ArchiveDirectoryBrowser.canonicalDirectoryPath(directoryPath) else {
+            return
+        }
+        currentArchiveDirectoryPath = canonicalPath
+        statusMessage = canonicalPath.isEmpty ? "正在瀏覽壓縮檔根目錄。" : "正在瀏覽：\(canonicalPath)"
+    }
+
+    func navigateUpArchiveDirectory() {
+        navigateToArchiveDirectory(
+            ArchiveDirectoryBrowser.parentPath(of: currentArchiveDirectoryPath)
+        )
+    }
+
+    func openDocumentURL(_ url: URL) {
+        guard url.isFileURL else { return }
+        guard ArchiveFormat(fileURL: url).isSupportedForReading else {
+            errorMessage = "目前只能瀏覽 .tuck、ZIP、分割壓縮檔或 7z。"
+            statusMessage = errorMessage ?? "操作失敗。"
+            return
+        }
+        loadArchive(url)
+        NSApplication.shared.activate(ignoringOtherApps: true)
+        NSApplication.shared.windows
+            .first(where: { $0.canBecomeKey })?
+            .makeKeyAndOrderFront(nil)
+    }
+
     func extractSelectedArchive() {
         guard let archiveURL = archiveURL else {
-            errorMessage = "請先開啟一個 ZIP 壓縮檔。"
+            errorMessage = "請先開啟 .tuck、ZIP 或 7z 壓縮檔。"
             return
         }
         let panel = NSOpenPanel()
@@ -92,31 +198,151 @@ final class ArchiveViewModel: ObservableObject {
             return
         }
         guard let folderURL = panel.url else { return }
-        let destinationURL = folderURL.appendingPathComponent(archiveURL.deletingPathExtension().lastPathComponent, isDirectory: true)
-        perform("正在解壓到 \(destinationURL.lastPathComponent)...") {
-            try self.archiveService.extract(archiveURL: archiveURL, destinationURL: destinationURL)
+        let destinationURL = folderURL.appendingPathComponent(
+            archiveBaseName(for: archiveURL),
+            isDirectory: true
+        )
+        guard extractionPasswordIsValid else { return }
+        let password = archiveIsEncrypted ? archivePassword : nil
+        let operation = beginArchiveOperation()
+        perform("正在解壓到 \(destinationURL.lastPathComponent)...", operation: operation) {
+            try self.archiveService.extract(
+                archiveURL: archiveURL,
+                destinationURL: destinationURL,
+                password: password,
+                operation: operation
+            )
             DispatchQueue.main.async {
                 self.statusMessage = "解壓完成：\(destinationURL.path)"
             }
         }
     }
 
-    func createZipPanel() {
-        let openPanel = NSOpenPanel()
-        openPanel.canChooseFiles = true
-        openPanel.canChooseDirectories = true
-        openPanel.allowsMultipleSelection = true
-        openPanel.prompt = "選擇"
-        guard openPanel.runModal() == .OK else { return }
-
-        let savePanel = NSSavePanel()
-        savePanel.allowedFileTypes = ["zip"]
-        savePanel.nameFieldStringValue = "Archive.zip"
-        guard savePanel.runModal() == .OK, let destinationURL = savePanel.url else { return }
-
-        perform("正在建立 \(destinationURL.lastPathComponent)...") {
-            try self.createZip(from: openPanel.urls, destinationURL: destinationURL)
+    func extractEntry(_ entry: ArchiveEntry) {
+        guard let archiveURL = archiveURL else {
+            errorMessage = "請先開啟 .tuck、ZIP 或 7z 壓縮檔。"
+            return
         }
+
+        let destinationURL: URL?
+        if entry.isDirectory {
+            let panel = NSOpenPanel()
+            panel.canChooseFiles = false
+            panel.canChooseDirectories = true
+            panel.canCreateDirectories = true
+            panel.allowsMultipleSelection = false
+            panel.prompt = "解壓至此"
+            guard panel.runModal() == .OK, let folderURL = panel.url else {
+                return
+            }
+            destinationURL = folderURL.appendingPathComponent(
+                entry.name,
+                isDirectory: true
+            )
+        } else {
+            let panel = NSSavePanel()
+            panel.nameFieldStringValue = entry.name
+            panel.prompt = "解壓"
+            guard panel.runModal() == .OK else { return }
+            destinationURL = panel.url
+        }
+
+        guard let destinationURL = destinationURL else { return }
+        guard extractionPasswordIsValid else { return }
+        let password = archiveIsEncrypted ? archivePassword : nil
+        perform("正在解壓 \(entry.name)...") {
+            try self.archiveService.extractEntry(
+                archiveURL: archiveURL,
+                entry: entry,
+                destinationURL: destinationURL,
+                password: password
+            )
+            DispatchQueue.main.async {
+                self.statusMessage = "已解壓：\(destinationURL.path)"
+            }
+        }
+    }
+
+    func dragItemProvider(for entry: ArchiveEntry) -> NSItemProvider {
+        let provider = NSItemProvider()
+        provider.suggestedName = entry.name
+        guard let archiveURL = archiveURL else { return provider }
+
+        let typeIdentifier: String
+        if entry.isDirectory {
+            typeIdentifier = UTType.folder.identifier
+        } else {
+            typeIdentifier =
+                UTType(filenameExtension:
+                    URL(fileURLWithPath: entry.name).pathExtension
+                )?.identifier
+                ?? UTType.data.identifier
+        }
+
+        provider.registerFileRepresentation(
+            forTypeIdentifier: typeIdentifier,
+            fileOptions: [],
+            visibility: .all
+        ) { [weak self] completion in
+            let progress = Progress(totalUnitCount: 100)
+            guard let self = self else {
+                completion(nil, false, CocoaError(.fileNoSuchFile))
+                return progress
+            }
+            let password = self.archiveIsEncrypted ? self.archivePassword : nil
+            if self.archiveIsEncrypted && self.archivePassword.isEmpty {
+                completion(nil, false, ArchiveServiceError.archivePasswordRequired)
+                DispatchQueue.main.async {
+                    self.errorMessage = ArchiveServiceError.archivePasswordRequired.errorDescription
+                    self.statusMessage = self.errorMessage ?? "無法拖出壓縮項目。"
+                }
+                return progress
+            }
+
+            DispatchQueue.global(qos: .userInitiated).async {
+                let temporaryRoot = FileManager.default.temporaryDirectory
+                    .appendingPathComponent(
+                        "TuckByte-Drag-\(UUID().uuidString)",
+                        isDirectory: true
+                    )
+                let destinationURL = temporaryRoot.appendingPathComponent(
+                    entry.name,
+                    isDirectory: entry.isDirectory
+                )
+
+                do {
+                    try FileManager.default.createDirectory(
+                        at: temporaryRoot,
+                        withIntermediateDirectories: true,
+                        attributes: nil
+                    )
+                    try self.archiveService.extractEntry(
+                        archiveURL: archiveURL,
+                        entry: entry,
+                        destinationURL: destinationURL,
+                        password: password
+                    )
+                    progress.completedUnitCount = 100
+                    completion(destinationURL, false, nil)
+                    DispatchQueue.main.async {
+                        self.statusMessage = "已準備拖出：\(entry.name)"
+                    }
+                    Self.removeDragTemporaryDirectoryLater(temporaryRoot)
+                } catch {
+                    try? FileManager.default.removeItem(at: temporaryRoot)
+                    completion(nil, false, error)
+                    DispatchQueue.main.async {
+                        self.errorMessage =
+                            (error as? LocalizedError)?.errorDescription
+                            ?? error.localizedDescription
+                        self.statusMessage =
+                            self.errorMessage ?? "無法拖出壓縮項目。"
+                    }
+                }
+            }
+            return progress
+        }
+        return provider
     }
 
     func addPendingItemsPanel() {
@@ -131,6 +357,7 @@ final class ArchiveViewModel: ObservableObject {
     }
 
     func addPendingItems(_ urls: [URL]) {
+        workspaceMode = .compress
         let newItems = urls
             .filter { url in
                 !pendingItems.contains { $0.url == url }
@@ -155,18 +382,45 @@ final class ArchiveViewModel: ObservableObject {
         statusMessage = "待壓縮清單已清空。"
     }
 
-    func replacePendingItems(_ urls: [URL]) {
+    func replacePendingItems(
+        _ urls: [URL],
+        statusMessage customStatusMessage: String? = nil
+    ) {
+        workspaceMode = .compress
         archiveURL = nil
         entries = []
+        currentArchiveDirectoryPath = ""
+        archiveEncryptionMethod = .none
+        archivePassword = ""
         pendingItems = urls.map { PendingArchiveItem(url: $0) }
         errorMessage = nil
-        statusMessage = "已從 Finder 加入 \(pendingItems.count) 個項目。"
+        statusMessage = customStatusMessage
+            ?? "已從 Finder 加入 \(pendingItems.count) 個項目。"
+    }
+
+    func beginFinderCompression(count: Int) {
+        errorMessage = nil
+        isWorking = true
+        statusMessage = "正在背景壓縮 \(count) 個項目..."
+    }
+
+    func completeFinderCompression(_ result: ArchiveCompressionResult) {
+        isWorking = false
+        if let destinationURL = result.destinationURL, result.succeeded {
+            errorMessage = nil
+            statusMessage = "壓縮完成：\(destinationURL.path)"
+            return
+        }
+
+        let message = result.errorDescription ?? "無法建立 ZIP。"
+        errorMessage = message
+        statusMessage = message
     }
 
     func beginFinderExtraction(count: Int) {
         errorMessage = nil
         isWorking = true
-        statusMessage = "正在背景解壓 \(count) 個 ZIP..."
+        statusMessage = "正在背景解壓 \(count) 個壓縮檔..."
     }
 
     func completeFinderExtraction(_ results: [ArchiveExtractionResult]) {
@@ -178,7 +432,7 @@ final class ArchiveViewModel: ObservableObject {
             if succeededResults.count == 1, let destinationURL = succeededResults.first?.destinationURL {
                 statusMessage = "解壓完成：\(destinationURL.path)"
             } else {
-                statusMessage = "已完成 \(succeededResults.count) 個 ZIP 的解壓。"
+                statusMessage = "已完成 \(succeededResults.count) 個壓縮檔的解壓。"
             }
             return
         }
@@ -198,120 +452,165 @@ final class ArchiveViewModel: ObservableObject {
         guard compressionOptionsAreValid else { return }
 
         let savePanel = NSSavePanel()
-        savePanel.allowedFileTypes = [outputFormat.fileExtension]
-        savePanel.nameFieldStringValue = "Archive.\(outputFormat.fileExtension)"
+        configureSavePanel(savePanel, baseName: "Archive")
         guard savePanel.runModal() == .OK, let destinationURL = savePanel.url else { return }
 
-        perform("正在以目前設定建立 \(destinationURL.lastPathComponent)...") {
-            try self.createZip(from: self.pendingItems.map { $0.url }, destinationURL: destinationURL)
-        }
-    }
-
-    func createArchiveFromCurrentContext() {
-        if !pendingItems.isEmpty {
-            createZipFromPendingItems()
-        } else {
-            wrapSelectedArchive()
-        }
-    }
-
-    func wrapSelectedArchive() {
-        guard let sourceArchiveURL = archiveURL else {
-            errorMessage = "請先開啟要再壓縮一層的 ZIP。"
-            statusMessage = errorMessage ?? "操作失敗。"
-            return
-        }
-        guard compressionOptionsAreValid else { return }
-
-        let savePanel = NSSavePanel()
-        savePanel.allowedFileTypes = [outputFormat.fileExtension]
-        savePanel.nameFieldStringValue = "\(sourceArchiveURL.deletingPathExtension().lastPathComponent)-外層.\(outputFormat.fileExtension)"
-        guard savePanel.runModal() == .OK, let destinationURL = savePanel.url else { return }
-
-        perform("正在把 \(sourceArchiveURL.lastPathComponent) 再壓縮一層...") {
-            try self.createZip(from: [sourceArchiveURL], destinationURL: destinationURL)
-        }
-    }
-
-    func createZipFromDroppedItems(_ urls: [URL]) {
-        guard !urls.isEmpty else { return }
-        let savePanel = NSSavePanel()
-        savePanel.allowedFileTypes = ["zip"]
-        savePanel.nameFieldStringValue = defaultArchiveName(for: urls)
-        guard savePanel.runModal() == .OK, let destinationURL = savePanel.url else { return }
-
-        perform("正在建立 \(destinationURL.lastPathComponent)...") {
-            try self.createZip(from: urls, destinationURL: destinationURL)
+        let operation = beginArchiveOperation()
+        perform("正在以目前設定建立 \(destinationURL.lastPathComponent)...", operation: operation) {
+            try self.createZip(
+                from: self.pendingItems.map { $0.url },
+                destinationURL: destinationURL,
+                operation: operation
+            )
         }
     }
 
     func handleDrop(urls: [URL]) {
         guard !urls.isEmpty else { return }
-        if urls.count == 1, ArchiveFormat(fileURL: urls[0]).isSupportedInFirstVersion {
-            loadArchive(urls[0])
-        } else if urls.count == 1 {
-            let format = ArchiveFormat(fileURL: urls[0])
-            if format == .sevenZip || format == .rar || format == .tar || format == .gzip {
-                loadArchive(urls[0])
-            } else {
-                addPendingItems(urls)
-            }
-        } else {
+        switch workspaceMode {
+        case .compress:
             addPendingItems(urls)
+        case .extract:
+            guard urls.count == 1,
+                  ArchiveFormat(fileURL: urls[0]).isSupportedForReading else {
+                errorMessage = "解壓縮模式只能拖入一個 .tuck、ZIP、分割壓縮檔或 7z。"
+                statusMessage = errorMessage ?? "操作失敗。"
+                return
+            }
+            loadArchive(urls[0])
         }
     }
 
-    private func createZip(from sourceURLs: [URL], destinationURL: URL) throws {
-        try self.archiveService.createZip(from: sourceURLs, destinationURL: destinationURL, settings: currentCompressionSettings)
-        let loadedEntries = try self.archiveService.inspect(archiveURL: destinationURL)
+    func cancelCurrentOperation() {
+        currentOperation?.cancel()
+        statusMessage = "正在取消操作..."
+    }
+
+    private func createZip(
+        from sourceURLs: [URL],
+        destinationURL: URL,
+        operation: ArchiveOperation? = nil
+    ) throws {
+        let settings = currentCompressionSettings
+        try self.archiveService.createArchive(
+            from: sourceURLs,
+            destinationURL: destinationURL,
+            settings: settings,
+            operation: operation
+        )
         DispatchQueue.main.async {
-            self.archiveURL = destinationURL
-            self.entries = loadedEntries
-            self.statusMessage = "已建立 ZIP：\(destinationURL.path)"
+            let formatName = settings.outputFormat.displayName
+            self.statusMessage = settings.volumeSizeBytes != nil
+                ? "已建立分割 \(formatName)：\(destinationURL.path)"
+                : "已建立 \(formatName)：\(destinationURL.path)"
         }
-    }
-
-    private func defaultArchiveName(for urls: [URL]) -> String {
-        if urls.count == 1 {
-            return "\(urls[0].deletingPathExtension().lastPathComponent).zip"
-        }
-        return "Archive.zip"
     }
 
     private var currentCompressionSettings: CompressionSettings {
         let encryption: ArchiveEncryption
-        if isEncryptionEnabled {
-            encryption = .zipCrypto(password: encryptionPassword)
-        } else {
+        switch encryptionMethod {
+        case .none:
             encryption = .none
+        case .aes256:
+            encryption = .aes256(password: encryptionPassword)
+        case .zipCrypto:
+            encryption = .zipCrypto(password: encryptionPassword)
         }
 
         return CompressionSettings(
             outputFormat: outputFormat,
             compressionLevel: Int(compressionLevel.rounded()),
-            encryption: encryption
+            encryption: encryption,
+            volumeSizeBytes: splitVolumeSizeBytes
         )
     }
 
+    private var splitVolumeSizeBytes: Int64? {
+        guard isSplitArchiveEnabled else { return nil }
+        if let presetBytes = splitVolumeSizePreset.volumeSizeBytes {
+            return presetBytes
+        }
+        guard let megabytes = Int64(customSplitVolumeSizeMB), megabytes > 0 else {
+            return nil
+        }
+        return megabytes.multipliedReportingOverflow(by: 1_048_576).overflow
+            ? nil
+            : megabytes * 1_048_576
+    }
+
     private var encryptionInputsAreValid: Bool {
-        !isEncryptionEnabled || encryptionPassword == encryptionPasswordConfirmation
+        encryptionMethod == .none
+            || (!encryptionPassword.isEmpty
+                && encryptionPassword == encryptionPasswordConfirmation)
+    }
+
+    private var extractionPasswordIsValid: Bool {
+        guard archiveIsEncrypted && archivePassword.isEmpty else { return true }
+        errorMessage = ArchiveServiceError.archivePasswordRequired.errorDescription
+        statusMessage = errorMessage ?? "操作失敗。"
+        return false
     }
 
     private var compressionOptionsAreValid: Bool {
-        guard outputFormat.isSupportedForCreation else {
-            errorMessage = "\(outputFormat.displayName) 建立功能下一版才會支援，目前請先選 ZIP。"
+        guard encryptionInputsAreValid else {
+            errorMessage = encryptionPassword.isEmpty
+                ? "請輸入加密密碼。"
+                : "兩次輸入的密碼不一致。"
             statusMessage = errorMessage ?? "操作失敗。"
             return false
         }
-        guard encryptionInputsAreValid else {
-            errorMessage = "兩次輸入的密碼不一致。"
+        if outputFormat == .tuck && encryptionMethod == .zipCrypto {
+            errorMessage = ".tuck 不支援不安全的 ZipCrypto；請改用 AES-256。"
             statusMessage = errorMessage ?? "操作失敗。"
             return false
+        }
+        if isSplitArchiveEnabled {
+            guard let volumeSizeBytes = splitVolumeSizeBytes,
+                  volumeSizeBytes >= 1_048_576 else {
+                errorMessage = "自訂分卷大小必須是大於或等於 1 的整數 MB。"
+                statusMessage = errorMessage ?? "操作失敗。"
+                return false
+            }
         }
         return true
     }
 
-    private func perform(_ message: String, work: @escaping () throws -> Void) {
+    private func configureSavePanel(
+        _ savePanel: NSSavePanel,
+        baseName: String
+    ) {
+        let suffix = isSplitArchiveEnabled
+            ? "\(outputFormat.fileExtension).001"
+            : outputFormat.fileExtension
+        savePanel.allowedFileTypes = [isSplitArchiveEnabled ? "001" : suffix]
+        savePanel.nameFieldStringValue = "\(baseName).\(suffix)"
+        savePanel.isExtensionHidden = false
+    }
+
+    private func archiveBaseName(for archiveURL: URL) -> String {
+        let logicalURL = SplitZipArchive.logicalArchiveURL(for: archiveURL)
+            ?? SplitTuckArchive.logicalArchiveURL(for: archiveURL)
+            ?? archiveURL
+        let baseName = logicalURL.deletingPathExtension().lastPathComponent
+        return baseName.isEmpty ? "Archive" : baseName
+    }
+
+    private func beginArchiveOperation() -> ArchiveOperation {
+        let operation = ArchiveOperation { [weak self] snapshot in
+            DispatchQueue.main.async {
+                self?.operationProgress = snapshot
+            }
+        }
+        currentOperation = operation
+        operationProgress = nil
+        return operation
+    }
+
+    private func perform(
+        _ message: String,
+        operation: ArchiveOperation? = nil,
+        work: @escaping () throws -> Void
+    ) {
         errorMessage = nil
         statusMessage = message
         isWorking = true
@@ -320,14 +619,46 @@ final class ArchiveViewModel: ObservableObject {
                 try work()
                 DispatchQueue.main.async {
                     self.isWorking = false
+                    if self.currentOperation === operation {
+                        self.currentOperation = nil
+                        self.operationProgress = nil
+                    }
                 }
             } catch {
                 DispatchQueue.main.async {
                     self.isWorking = false
+                    if self.currentOperation === operation {
+                        self.currentOperation = nil
+                        self.operationProgress = nil
+                    }
                     self.errorMessage = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
                     self.statusMessage = self.errorMessage ?? "操作失敗。"
                 }
             }
+        }
+    }
+
+    private static func removeDragTemporaryDirectoryLater(_ url: URL) {
+        DispatchQueue.global(qos: .utility).asyncAfter(
+            deadline: .now() + 600
+        ) {
+            try? FileManager.default.removeItem(at: url)
+        }
+    }
+}
+
+enum WorkspaceMode: String, CaseIterable, Identifiable {
+    case compress
+    case extract
+
+    var id: String { rawValue }
+
+    var displayName: String {
+        switch self {
+        case .compress:
+            return "壓縮"
+        case .extract:
+            return "解壓縮"
         }
     }
 }
@@ -383,6 +714,46 @@ enum CompressionSpeed: String, CaseIterable, Identifiable {
             return 6
         case .smallest:
             return 9
+        }
+    }
+}
+
+enum SplitVolumeSizePreset: String, CaseIterable, Identifiable {
+    case tenMB
+    case hundredMB
+    case oneGB
+    case fourGB
+    case custom
+
+    var id: String { rawValue }
+
+    var displayName: String {
+        switch self {
+        case .tenMB:
+            return "10 MB"
+        case .hundredMB:
+            return "100 MB"
+        case .oneGB:
+            return "1 GB"
+        case .fourGB:
+            return "4 GB"
+        case .custom:
+            return "自訂"
+        }
+    }
+
+    var volumeSizeBytes: Int64? {
+        switch self {
+        case .tenMB:
+            return 10 * 1_048_576
+        case .hundredMB:
+            return 100 * 1_048_576
+        case .oneGB:
+            return 1_024 * 1_048_576
+        case .fourGB:
+            return 4_096 * 1_048_576
+        case .custom:
+            return nil
         }
     }
 }

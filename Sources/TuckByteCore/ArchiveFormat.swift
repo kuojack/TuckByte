@@ -2,24 +2,24 @@ import Foundation
 
 public enum ArchiveFormat: String, Equatable {
     case zip
-    case tar
-    case gzip
+    case splitZip
+    case tuck
+    case splitTuck
     case sevenZip
-    case rar
     case unsupported
 
     public init(fileURL: URL) {
         let name = fileURL.lastPathComponent.lowercased()
-        if name.hasSuffix(".zip") {
+        if SplitZipArchive.isVolumeURL(fileURL) {
+            self = .splitZip
+        } else if SplitTuckArchive.isVolumeURL(fileURL) {
+            self = .splitTuck
+        } else if name.hasSuffix(".zip") {
             self = .zip
-        } else if name.hasSuffix(".tar") {
-            self = .tar
-        } else if name.hasSuffix(".tar.gz") || name.hasSuffix(".tgz") || name.hasSuffix(".gz") {
-            self = .gzip
+        } else if name.hasSuffix(".tuck") {
+            self = .tuck
         } else if name.hasSuffix(".7z") {
             self = .sevenZip
-        } else if name.hasSuffix(".rar") {
-            self = .rar
         } else {
             self = .unsupported
         }
@@ -29,20 +29,21 @@ public enum ArchiveFormat: String, Equatable {
         switch self {
         case .zip:
             return "ZIP"
-        case .tar:
-            return "TAR"
-        case .gzip:
-            return "GZip"
+        case .splitZip:
+            return "分割 ZIP"
+        case .tuck:
+            return "TuckByte (.tuck)"
+        case .splitTuck:
+            return "分割 TuckByte"
         case .sevenZip:
             return "7z"
-        case .rar:
-            return "RAR"
         case .unsupported:
             return "Unsupported"
         }
     }
 
-    public var isSupportedInFirstVersion: Bool {
-        self == .zip
+    public var isSupportedForReading: Bool {
+        self == .zip || self == .splitZip || self == .tuck
+            || self == .splitTuck || self == .sevenZip
     }
 }
