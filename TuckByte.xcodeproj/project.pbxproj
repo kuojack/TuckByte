@@ -46,6 +46,24 @@
 		A60000000000000000000025 /* mz_strm_zlib.c in Sources */ = {isa = PBXBuildFile; fileRef = A50000000000000000000029 /* mz_strm_zlib.c */; };
 		A60000000000000000000026 /* mz_zip.c in Sources */ = {isa = PBXBuildFile; fileRef = A5000000000000000000002A /* mz_zip.c */; };
 		A60000000000000000000027 /* mz_zip_rw.c in Sources */ = {isa = PBXBuildFile; fileRef = A5000000000000000000002B /* mz_zip_rw.c */; };
+		A60000000000000000000028 /* SplitTuckArchive.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5000000000000000000002C /* SplitTuckArchive.swift */; };
+		A60000000000000000000029 /* TuckArchiveBinary.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5000000000000000000002D /* TuckArchiveBinary.swift */; };
+		A6000000000000000000002A /* TuckArchiveCompression.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5000000000000000000002E /* TuckArchiveCompression.swift */; };
+		A6000000000000000000002B /* TuckArchiveCrypto.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5000000000000000000002F /* TuckArchiveCrypto.swift */; };
+		A6000000000000000000002C /* TuckArchiveFormat.swift in Sources */ = {isa = PBXBuildFile; fileRef = A50000000000000000000030 /* TuckArchiveFormat.swift */; };
+		A6000000000000000000002D /* TuckArchiveReader.swift in Sources */ = {isa = PBXBuildFile; fileRef = A50000000000000000000031 /* TuckArchiveReader.swift */; };
+		A6000000000000000000002E /* TuckArchiveWriter.swift in Sources */ = {isa = PBXBuildFile; fileRef = A50000000000000000000032 /* TuckArchiveWriter.swift */; };
+		A6000000000000000000002F /* zstd.c in Sources */ = {isa = PBXBuildFile; fileRef = A50000000000000000000033 /* zstd.c */; };
+		A60000000000000000000030 /* argon2.c in Sources */ = {isa = PBXBuildFile; fileRef = A50000000000000000000034 /* argon2.c */; };
+		A60000000000000000000031 /* core.c in Sources */ = {isa = PBXBuildFile; fileRef = A50000000000000000000035 /* core.c */; };
+		A60000000000000000000032 /* encoding.c in Sources */ = {isa = PBXBuildFile; fileRef = A50000000000000000000036 /* encoding.c */; };
+		A60000000000000000000033 /* ref.c in Sources */ = {isa = PBXBuildFile; fileRef = A50000000000000000000037 /* ref.c */; };
+		A60000000000000000000034 /* thread.c in Sources */ = {isa = PBXBuildFile; fileRef = A50000000000000000000038 /* thread.c */; };
+		A60000000000000000000035 /* blake2b.c in Sources */ = {isa = PBXBuildFile; fileRef = A50000000000000000000039 /* blake2b.c */; };
+		A60000000000000000000036 /* TuckArchiveEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5000000000000000000003A /* TuckArchiveEngine.swift */; };
+		A60000000000000000000037 /* TuckArchiveDataSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5000000000000000000003B /* TuckArchiveDataSource.swift */; };
+		A60000000000000000000038 /* TuckArchiveOutputSink.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5000000000000000000003C /* TuckArchiveOutputSink.swift */; };
+		A60000000000000000000039 /* ArchiveOperation.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5000000000000000000003D /* ArchiveOperation.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -113,6 +131,24 @@
 		A50000000000000000000029 /* mz_strm_zlib.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = ../CMinizip/minizip/mz_strm_zlib.c; sourceTree = "<group>"; };
 		A5000000000000000000002A /* mz_zip.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = ../CMinizip/minizip/mz_zip.c; sourceTree = "<group>"; };
 		A5000000000000000000002B /* mz_zip_rw.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = ../CMinizip/minizip/mz_zip_rw.c; sourceTree = "<group>"; };
+		A5000000000000000000002C /* SplitTuckArchive.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SplitTuckArchive.swift; sourceTree = "<group>"; };
+		A5000000000000000000002D /* TuckArchiveBinary.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TuckArchiveBinary.swift; sourceTree = "<group>"; };
+		A5000000000000000000002E /* TuckArchiveCompression.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TuckArchiveCompression.swift; sourceTree = "<group>"; };
+		A5000000000000000000002F /* TuckArchiveCrypto.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TuckArchiveCrypto.swift; sourceTree = "<group>"; };
+		A50000000000000000000030 /* TuckArchiveFormat.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TuckArchiveFormat.swift; sourceTree = "<group>"; };
+		A50000000000000000000031 /* TuckArchiveReader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TuckArchiveReader.swift; sourceTree = "<group>"; };
+		A50000000000000000000032 /* TuckArchiveWriter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TuckArchiveWriter.swift; sourceTree = "<group>"; };
+		A50000000000000000000033 /* zstd.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = ../CZstd/zstd.c; sourceTree = "<group>"; };
+		A50000000000000000000034 /* argon2.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = ../CArgon2/src/argon2.c; sourceTree = "<group>"; };
+		A50000000000000000000035 /* core.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = ../CArgon2/src/core.c; sourceTree = "<group>"; };
+		A50000000000000000000036 /* encoding.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = ../CArgon2/src/encoding.c; sourceTree = "<group>"; };
+		A50000000000000000000037 /* ref.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = ../CArgon2/src/ref.c; sourceTree = "<group>"; };
+		A50000000000000000000038 /* thread.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = ../CArgon2/src/thread.c; sourceTree = "<group>"; };
+		A50000000000000000000039 /* blake2b.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = ../CArgon2/src/blake2/blake2b.c; sourceTree = "<group>"; };
+		A5000000000000000000003A /* TuckArchiveEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TuckArchiveEngine.swift; sourceTree = "<group>"; };
+		A5000000000000000000003B /* TuckArchiveDataSource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TuckArchiveDataSource.swift; sourceTree = "<group>"; };
+		A5000000000000000000003C /* TuckArchiveOutputSink.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TuckArchiveOutputSink.swift; sourceTree = "<group>"; };
+		A5000000000000000000003D /* ArchiveOperation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ArchiveOperation.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -179,10 +215,28 @@
 				A50000000000000000000002 /* ArchiveEntry.swift */,
 				A50000000000000000000003 /* ArchiveFormat.swift */,
 				A50000000000000000000004 /* ArchiveService.swift */,
+				A5000000000000000000003D /* ArchiveOperation.swift */,
 				A50000000000000000000005 /* CompressionSettings.swift */,
 				A5000000000000000000001C /* MinizipArchiveEngine.swift */,
 				A50000000000000000000006 /* ShellArchiveService.swift */,
 				A5000000000000000000001B /* SplitZipArchive.swift */,
+				A5000000000000000000002C /* SplitTuckArchive.swift */,
+				A5000000000000000000002D /* TuckArchiveBinary.swift */,
+				A5000000000000000000002E /* TuckArchiveCompression.swift */,
+				A5000000000000000000002F /* TuckArchiveCrypto.swift */,
+				A5000000000000000000003B /* TuckArchiveDataSource.swift */,
+				A5000000000000000000003C /* TuckArchiveOutputSink.swift */,
+				A5000000000000000000003A /* TuckArchiveEngine.swift */,
+				A50000000000000000000030 /* TuckArchiveFormat.swift */,
+				A50000000000000000000031 /* TuckArchiveReader.swift */,
+				A50000000000000000000032 /* TuckArchiveWriter.swift */,
+				A50000000000000000000033 /* zstd.c */,
+				A50000000000000000000034 /* argon2.c */,
+				A50000000000000000000035 /* core.c */,
+				A50000000000000000000036 /* encoding.c */,
+				A50000000000000000000037 /* ref.c */,
+				A50000000000000000000038 /* thread.c */,
+				A50000000000000000000039 /* blake2b.c */,
 				A5000000000000000000001D /* TuckByteMinizip.c */,
 				A5000000000000000000001E /* mz_crypt.c */,
 				A5000000000000000000001F /* mz_crypt_apple.c */,
@@ -373,10 +427,28 @@
 				A60000000000000000000002 /* ArchiveEntry.swift in Sources */,
 				A60000000000000000000003 /* ArchiveFormat.swift in Sources */,
 				A60000000000000000000004 /* ArchiveService.swift in Sources */,
+				A60000000000000000000039 /* ArchiveOperation.swift in Sources */,
 				A60000000000000000000005 /* CompressionSettings.swift in Sources */,
 				A60000000000000000000018 /* MinizipArchiveEngine.swift in Sources */,
 				A60000000000000000000006 /* ShellArchiveService.swift in Sources */,
 				A60000000000000000000017 /* SplitZipArchive.swift in Sources */,
+				A60000000000000000000028 /* SplitTuckArchive.swift in Sources */,
+				A60000000000000000000029 /* TuckArchiveBinary.swift in Sources */,
+				A6000000000000000000002A /* TuckArchiveCompression.swift in Sources */,
+				A6000000000000000000002B /* TuckArchiveCrypto.swift in Sources */,
+				A60000000000000000000037 /* TuckArchiveDataSource.swift in Sources */,
+				A60000000000000000000038 /* TuckArchiveOutputSink.swift in Sources */,
+				A60000000000000000000036 /* TuckArchiveEngine.swift in Sources */,
+				A6000000000000000000002C /* TuckArchiveFormat.swift in Sources */,
+				A6000000000000000000002D /* TuckArchiveReader.swift in Sources */,
+				A6000000000000000000002E /* TuckArchiveWriter.swift in Sources */,
+				A6000000000000000000002F /* zstd.c in Sources */,
+				A60000000000000000000030 /* argon2.c in Sources */,
+				A60000000000000000000031 /* core.c in Sources */,
+				A60000000000000000000032 /* encoding.c in Sources */,
+				A60000000000000000000033 /* ref.c in Sources */,
+				A60000000000000000000034 /* thread.c in Sources */,
+				A60000000000000000000035 /* blake2b.c in Sources */,
 				A60000000000000000000019 /* TuckByteMinizip.c in Sources */,
 				A6000000000000000000001A /* mz_crypt.c in Sources */,
 				A6000000000000000000001B /* mz_crypt_apple.c in Sources */,
@@ -467,7 +539,7 @@
 			buildSettings = {
 				DEFINES_MODULE = YES;
 				GCC_PREPROCESSOR_DEFINITIONS = ("$(inherited)", HAVE_STDINT_H, HAVE_INTTYPES_H, HAVE_FSEEKO, HAVE_ZLIB, ZLIB_COMPAT, HAVE_PKCRYPT, HAVE_WZAES, HAVE_ARC4RANDOM_BUF, _DARWIN_C_SOURCE, "_POSIX_C_SOURCE=200809L", _BSD_SOURCE, _DEFAULT_SOURCE, );
-				HEADER_SEARCH_PATHS = ("$(inherited)", "$(PROJECT_DIR)/Sources/CMinizip/include", "$(PROJECT_DIR)/Sources/CMinizip/minizip", );
+				HEADER_SEARCH_PATHS = ("$(inherited)", "$(PROJECT_DIR)/Sources/CMinizip/include", "$(PROJECT_DIR)/Sources/CMinizip/minizip", "$(PROJECT_DIR)/Sources/CZstd/include", "$(PROJECT_DIR)/Sources/CArgon2/include", "$(PROJECT_DIR)/Sources/CArgon2/src", "$(PROJECT_DIR)/Sources/CArgon2/src/blake2", );
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
 				SWIFT_OBJC_BRIDGING_HEADER = Sources/CMinizip/include/TuckByteMinizip.h;
@@ -480,7 +552,7 @@
 			buildSettings = {
 				DEFINES_MODULE = YES;
 				GCC_PREPROCESSOR_DEFINITIONS = ("$(inherited)", HAVE_STDINT_H, HAVE_INTTYPES_H, HAVE_FSEEKO, HAVE_ZLIB, ZLIB_COMPAT, HAVE_PKCRYPT, HAVE_WZAES, HAVE_ARC4RANDOM_BUF, _DARWIN_C_SOURCE, "_POSIX_C_SOURCE=200809L", _BSD_SOURCE, _DEFAULT_SOURCE, );
-				HEADER_SEARCH_PATHS = ("$(inherited)", "$(PROJECT_DIR)/Sources/CMinizip/include", "$(PROJECT_DIR)/Sources/CMinizip/minizip", );
+				HEADER_SEARCH_PATHS = ("$(inherited)", "$(PROJECT_DIR)/Sources/CMinizip/include", "$(PROJECT_DIR)/Sources/CMinizip/minizip", "$(PROJECT_DIR)/Sources/CZstd/include", "$(PROJECT_DIR)/Sources/CArgon2/include", "$(PROJECT_DIR)/Sources/CArgon2/src", "$(PROJECT_DIR)/Sources/CArgon2/src/blake2", );
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
 				SWIFT_OBJC_BRIDGING_HEADER = Sources/CMinizip/include/TuckByteMinizip.h;
@@ -517,12 +589,13 @@
 				CURRENT_PROJECT_VERSION = 1;
 				ENABLE_HARDENED_RUNTIME = NO;
 				GENERATE_INFOPLIST_FILE = NO;
+				HEADER_SEARCH_PATHS = ("$(inherited)", "$(PROJECT_DIR)/Sources/CMinizip/include", "$(PROJECT_DIR)/Sources/CMinizip/minizip", "$(PROJECT_DIR)/Sources/CZstd/include", "$(PROJECT_DIR)/Sources/CArgon2/include", "$(PROJECT_DIR)/Sources/CArgon2/src", "$(PROJECT_DIR)/Sources/CArgon2/src/blake2", );
 				INFOPLIST_FILE = "Config/TuckByte-Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MARKETING_VERSION = 0.7.0;
+				MARKETING_VERSION = 0.8.0;
 				OTHER_LDFLAGS = ("$(inherited)", "-lz", "-framework", CoreFoundation, "-framework", Security, );
 				PRODUCT_BUNDLE_IDENTIFIER = com.kuojack.TuckByte;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -538,12 +611,13 @@
 				CURRENT_PROJECT_VERSION = 1;
 				ENABLE_HARDENED_RUNTIME = NO;
 				GENERATE_INFOPLIST_FILE = NO;
+				HEADER_SEARCH_PATHS = ("$(inherited)", "$(PROJECT_DIR)/Sources/CMinizip/include", "$(PROJECT_DIR)/Sources/CMinizip/minizip", "$(PROJECT_DIR)/Sources/CZstd/include", "$(PROJECT_DIR)/Sources/CArgon2/include", "$(PROJECT_DIR)/Sources/CArgon2/src", "$(PROJECT_DIR)/Sources/CArgon2/src/blake2", );
 				INFOPLIST_FILE = "Config/TuckByte-Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MARKETING_VERSION = 0.7.0;
+				MARKETING_VERSION = 0.8.0;
 				OTHER_LDFLAGS = ("$(inherited)", "-lz", "-framework", CoreFoundation, "-framework", Security, );
 				PRODUCT_BUNDLE_IDENTIFIER = com.kuojack.TuckByte;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -566,7 +640,7 @@
 					"@executable_path/../Frameworks",
 					"@executable_path/../../../../Frameworks",
 				);
-				MARKETING_VERSION = 0.7.0;
+				MARKETING_VERSION = 0.8.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.kuojack.TuckByte.FinderSync;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
@@ -589,7 +663,7 @@
 					"@executable_path/../Frameworks",
 					"@executable_path/../../../../Frameworks",
 				);
-				MARKETING_VERSION = 0.7.0;
+				MARKETING_VERSION = 0.8.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.kuojack.TuckByte.FinderSync;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;

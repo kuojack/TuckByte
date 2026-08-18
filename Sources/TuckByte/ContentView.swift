@@ -107,7 +107,7 @@ struct ContentView: View {
                     Image(systemName: "archivebox")
                         .font(.system(size: 44, weight: .regular))
                         .foregroundColor(.accentColor)
-                    Text("拖入 ZIP 或 7z")
+                    Text("拖入 .tuck、ZIP 或 7z")
                         .font(.title3.weight(.semibold))
                     Text("也可以使用上方的「開啟壓縮檔」。")
                         .font(.caption)
@@ -140,7 +140,7 @@ struct ContentView: View {
                 Text("把檔案或資料夾拖進來")
                     .font(.headline)
                     .multilineTextAlignment(.center)
-                Text("拖入壓縮檔時，會把它再包成一層 ZIP。")
+                Text("拖入壓縮檔時，會把它當成一般來源再封裝。")
                     .font(.caption)
                     .foregroundColor(.secondary)
             }
@@ -214,8 +214,18 @@ struct ContentView: View {
                     SecureField("輸入解壓密碼", text: $viewModel.archivePassword)
                         .textFieldStyle(RoundedBorderTextFieldStyle())
                         .frame(width: 220)
+                    if viewModel.archiveIndexRequiresUnlock {
+                        Button("解鎖內容") {
+                            viewModel.unlockArchiveIndex()
+                        }
+                        .disabled(viewModel.isWorking || viewModel.archivePassword.isEmpty)
+                    }
                     Spacer()
-                    Text("解壓全部、單一項目與拖出時使用")
+                    Text(
+                        viewModel.archiveIndexRequiresUnlock
+                            ? "密碼也用於解密內容索引"
+                            : "解壓全部、單一項目與拖出時使用"
+                    )
                         .font(.caption)
                         .foregroundColor(.secondary)
                 }
@@ -403,12 +413,23 @@ struct ContentView: View {
     }
 
     private var statusBar: some View {
-        HStack {
+        HStack(spacing: 10) {
             Text(viewModel.statusMessage)
                 .font(.caption)
                 .foregroundColor(viewModel.errorMessage == nil ? .secondary : .red)
                 .lineLimit(1)
             Spacer()
+            if let progress = viewModel.operationProgress {
+                ProgressView(value: progress.fractionCompleted)
+                    .frame(width: 140)
+                Text("\(Int(progress.fractionCompleted * 100))%")
+                    .font(.caption.monospacedDigit())
+                    .foregroundColor(.secondary)
+                Button("取消") {
+                    viewModel.cancelCurrentOperation()
+                }
+                .controlSize(.small)
+            }
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 8)
@@ -450,21 +471,26 @@ struct ContentView: View {
                     }
 
                     VStack(alignment: .leading, spacing: 8) {
-                        HStack {
-                            Text("格式")
-                                .font(.caption.weight(.semibold))
-                                .foregroundColor(.secondary)
-                            Spacer()
-                            Label("ZIP", systemImage: "archivebox")
+                        Text("格式")
+                            .font(.caption.weight(.semibold))
+                            .foregroundColor(.secondary)
+                        Picker("", selection: $viewModel.outputFormat) {
+                            ForEach(ArchiveOutputFormat.allCases, id: \.self) { format in
+                                Text(format.displayName).tag(format)
+                            }
                         }
-                        Text("目前建立格式固定為 ZIP。")
+                        .pickerStyle(SegmentedPickerStyle())
+                        Text(
+                            viewModel.outputFormat == .tuck
+                                ? "自有格式：Zstd、加密索引與 AES-256-GCM。"
+                                : "通用 ZIP 格式，適合跨平台分享。"
+                        )
                             .font(.caption)
                             .foregroundColor(.secondary)
                     }
 
                     VStack(alignment: .leading, spacing: 8) {
                         Toggle("分割壓縮檔", isOn: $viewModel.isSplitArchiveEnabled)
-                            .disabled(viewModel.outputFormat != .zip)
                         if viewModel.isSplitArchiveEnabled {
                             Picker("每卷大小", selection: $viewModel.splitVolumeSizePreset) {
                                 ForEach(SplitVolumeSizePreset.allCases) { preset in
@@ -482,7 +508,9 @@ struct ContentView: View {
                                         .foregroundColor(.secondary)
                                 }
                             }
-                            Text("輸出為 .zip.001、.002、.003 連續分卷。")
+                            Text(
+                                "輸出為 .\(viewModel.outputFormat.fileExtension).001、.002、.003 連續分卷。"
+                            )
                                 .font(.caption)
                                 .foregroundColor(.secondary)
                         }
@@ -493,7 +521,7 @@ struct ContentView: View {
                             .font(.caption.weight(.semibold))
                             .foregroundColor(.secondary)
                         Picker("", selection: $viewModel.encryptionMethod) {
-                            ForEach(ArchiveEncryptionMethod.allCases, id: \.self) { method in
+                            ForEach(viewModel.availableEncryptionMethods, id: \.self) { method in
                                 Text(method.displayName).tag(method)
                             }
                         }
@@ -515,7 +543,10 @@ struct ContentView: View {
 
             Divider()
             Button(action: viewModel.createZipFromPendingItems) {
-                Label("建立 ZIP", systemImage: "archivebox.fill")
+                Label(
+                    "建立 \(viewModel.outputFormat.displayName)",
+                    systemImage: "archivebox.fill"
+                )
                     .frame(maxWidth: .infinity)
             }
             .disabled(!viewModel.canCreatePendingZip)
@@ -529,7 +560,9 @@ struct ContentView: View {
         case .none:
             return "不使用密碼保護。"
         case .aes256:
-            return "安全性較高；Windows 建議使用 7-Zip，macOS 可用 TuckByte 解壓。"
+            return viewModel.outputFormat == .tuck
+                ? "Argon2id + AES-256-GCM；索引、內容與檔名都受到保護。"
+                : "安全性較高；Windows 建議使用 7-Zip，macOS 可用 TuckByte 解壓。"
         case .zipCrypto:
             return "相容性較廣，但安全性較低，不適合敏感資料。"
         }

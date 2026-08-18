@@ -8,10 +8,27 @@ let package = Package(
     ],
     products: [
         .executable(name: "TuckByte", targets: ["TuckByte"]),
+        .executable(name: "tuck-inspect", targets: ["TuckByteFormatTool"]),
+        .executable(name: "tuck-parser-fuzz", targets: ["TuckArchiveParserFuzz"]),
+        .executable(name: "tuck-benchmark", targets: ["TuckByteBenchmark"]),
         .library(name: "TuckByteCore", targets: ["TuckByteCore"]),
         .library(name: "TuckByteIntegration", targets: ["TuckByteIntegration"])
     ],
     targets: [
+        .target(
+            name: "CZstd",
+            path: "Sources/CZstd",
+            publicHeadersPath: "include"
+        ),
+        .target(
+            name: "CArgon2",
+            path: "Sources/CArgon2",
+            publicHeadersPath: "include",
+            cSettings: [
+                .headerSearchPath("src"),
+                .headerSearchPath("src/blake2")
+            ]
+        ),
         .target(
             name: "CMinizip",
             path: "Sources/CMinizip",
@@ -39,7 +56,7 @@ let package = Package(
         ),
         .target(
             name: "TuckByteCore",
-            dependencies: ["CMinizip"]
+            dependencies: ["CMinizip", "CZstd", "CArgon2"]
         ),
         .target(
             name: "TuckByteIntegration",
@@ -49,9 +66,24 @@ let package = Package(
             name: "TuckByte",
             dependencies: ["TuckByteCore", "TuckByteIntegration"]
         ),
+        .target(
+            name: "TuckByteFormatTool",
+            dependencies: ["TuckByteCore"]
+        ),
+        .target(
+            name: "TuckArchiveParserFuzz",
+            dependencies: ["TuckByteCore"],
+            path: "Fuzz",
+            exclude: ["README.md"]
+        ),
+        .target(
+            name: "TuckByteBenchmark",
+            dependencies: ["TuckByteCore"]
+        ),
         .testTarget(
             name: "TuckByteCoreTests",
-            dependencies: ["TuckByteCore", "TuckByteIntegration"]
+            dependencies: ["TuckByteCore", "TuckByteIntegration"],
+            resources: [.copy("Fixtures")]
         )
     ]
 )

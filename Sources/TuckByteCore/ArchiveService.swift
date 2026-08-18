@@ -2,6 +2,7 @@ import Foundation
 
 public protocol ArchiveService {
     func inspect(archiveURL: URL) throws -> [ArchiveEntry]
+    func inspect(archiveURL: URL, password: String?) throws -> [ArchiveEntry]
     func extract(archiveURL: URL, destinationURL: URL) throws
     func extractEntry(
         archiveURL: URL,
@@ -9,6 +10,13 @@ public protocol ArchiveService {
         destinationURL: URL
     ) throws
     func createZip(from sourceURLs: [URL], destinationURL: URL, settings: CompressionSettings) throws
+    func createArchive(from sourceURLs: [URL], destinationURL: URL, settings: CompressionSettings) throws
+    func createArchive(
+        from sourceURLs: [URL],
+        destinationURL: URL,
+        settings: CompressionSettings,
+        operation: ArchiveOperation?
+    ) throws
     func encryptionMethod(archiveURL: URL) throws -> ArchiveEncryptionMethod
     func extract(archiveURL: URL, destinationURL: URL, password: String?) throws
     func extractEntry(
@@ -17,9 +25,20 @@ public protocol ArchiveService {
         destinationURL: URL,
         password: String?
     ) throws
+    func changePassword(archiveURL: URL, oldPassword: String, newPassword: String) throws
+    func extract(
+        archiveURL: URL,
+        destinationURL: URL,
+        password: String?,
+        operation: ArchiveOperation?
+    ) throws
 }
 
 public extension ArchiveService {
+    func inspect(archiveURL: URL, password: String?) throws -> [ArchiveEntry] {
+        try inspect(archiveURL: archiveURL)
+    }
+
     func extractEntry(
         archiveURL: URL,
         entry: ArchiveEntry,
@@ -76,6 +95,40 @@ public extension ArchiveService {
 
     func createZip(from sourceURLs: [URL], destinationURL: URL) throws {
         try createZip(from: sourceURLs, destinationURL: destinationURL, settings: .standard)
+    }
+
+    func createArchive(
+        from sourceURLs: [URL],
+        destinationURL: URL,
+        settings: CompressionSettings
+    ) throws {
+        try createZip(from: sourceURLs, destinationURL: destinationURL, settings: settings)
+    }
+
+    func createArchive(
+        from sourceURLs: [URL],
+        destinationURL: URL,
+        settings: CompressionSettings,
+        operation: ArchiveOperation?
+    ) throws {
+        try createArchive(from: sourceURLs, destinationURL: destinationURL, settings: settings)
+    }
+
+    func extract(
+        archiveURL: URL,
+        destinationURL: URL,
+        password: String?,
+        operation: ArchiveOperation?
+    ) throws {
+        try extract(
+            archiveURL: archiveURL,
+            destinationURL: destinationURL,
+            password: password
+        )
+    }
+
+    func changePassword(archiveURL: URL, oldPassword: String, newPassword: String) throws {
+        throw ArchiveServiceError.tuckArchiveUnsupportedFeature("password change")
     }
 
     func encryptionMethod(archiveURL: URL) throws -> ArchiveEncryptionMethod {
@@ -147,7 +200,13 @@ public enum ArchiveServiceError: Error, LocalizedError, Equatable {
     case encryptionPasswordRequired
     case archivePasswordRequired
     case incorrectArchivePassword
+    case operationCancelled
     case archiveEngineFailed(operation: String, code: Int32)
+    case tuckArchiveCorrupt(String)
+    case tuckArchiveUnsupportedFeature(String)
+    case tuckArchiveLimitExceeded(String)
+    case tuckArchiveCodecFailed(String)
+    case tuckArchiveCryptoFailed(String)
     case invalidSplitArchiveName(URL)
     case splitArchiveMissingFirstVolume(URL)
     case splitArchiveMissingVolume(URL)
@@ -178,13 +237,25 @@ public enum ArchiveServiceError: Error, LocalizedError, Equatable {
         case .encryptionPasswordRequired:
             return "已啟用加密，請輸入密碼。"
         case .archivePasswordRequired:
-            return "這個 ZIP 已加密，請先輸入密碼。"
+            return "這個壓縮檔已加密，請先輸入密碼。"
         case .incorrectArchivePassword:
-            return "密碼不正確，或加密 ZIP 已損壞。"
+            return "密碼不正確，或加密壓縮檔已損壞。"
+        case .operationCancelled:
+            return "操作已取消。"
         case .archiveEngineFailed(let operation, let code):
             return "\(operation)失敗（錯誤碼 \(code)）。"
+        case .tuckArchiveCorrupt(let reason):
+            return "TuckByte 壓縮檔已損壞或格式無效：\(reason)。"
+        case .tuckArchiveUnsupportedFeature(let feature):
+            return "這個 TuckByte 壓縮檔使用尚未支援的功能：\(feature)。"
+        case .tuckArchiveLimitExceeded(let limit):
+            return "TuckByte 壓縮檔超過安全限制：\(limit)。"
+        case .tuckArchiveCodecFailed(let reason):
+            return "TuckByte 壓縮引擎失敗：\(reason)。"
+        case .tuckArchiveCryptoFailed(let reason):
+            return "TuckByte 加密引擎失敗：\(reason)。"
         case .invalidSplitArchiveName(let url):
-            return "分割壓縮檔名稱必須為名稱.zip.001：\(url.lastPathComponent)"
+            return "分割壓縮檔名稱必須為名稱.zip.001 或名稱.tuck.001：\(url.lastPathComponent)"
         case .splitArchiveMissingFirstVolume(let url):
             return "找不到分割壓縮檔的第一卷：\(url.lastPathComponent)"
         case .splitArchiveMissingVolume(let url):

@@ -23,13 +23,20 @@ public struct CompressionSettings: Equatable {
 
 public enum ArchiveOutputFormat: String, CaseIterable, Equatable {
     case zip
+    case tuck
 
     public var displayName: String {
-        "ZIP"
+        switch self {
+        case .zip: return "ZIP"
+        case .tuck: return "TuckByte (.tuck)"
+        }
     }
 
     public var fileExtension: String {
-        "zip"
+        switch self {
+        case .zip: return "zip"
+        case .tuck: return "tuck"
+        }
     }
 
     public var isSupportedForCreation: Bool {

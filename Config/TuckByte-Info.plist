@@ -9,6 +9,22 @@
         <dict>
             <key>CFBundleTypeExtensions</key>
             <array>
+                <string>tuck</string>
+            </array>
+            <key>CFBundleTypeName</key>
+            <string>TuckByte Archive</string>
+            <key>CFBundleTypeRole</key>
+            <string>Editor</string>
+            <key>LSHandlerRank</key>
+            <string>Owner</string>
+            <key>LSItemContentTypes</key>
+            <array>
+                <string>com.tuckbyte.archive</string>
+            </array>
+        </dict>
+        <dict>
+            <key>CFBundleTypeExtensions</key>
+            <array>
                 <string>zip</string>
             </array>
             <key>CFBundleTypeName</key>
@@ -37,6 +53,29 @@
             <array>
                 <string>org.7-zip.7-zip-archive</string>
             </array>
+        </dict>
+    </array>
+    <key>UTExportedTypeDeclarations</key>
+    <array>
+        <dict>
+            <key>UTTypeConformsTo</key>
+            <array>
+                <string>public.archive</string>
+                <string>public.data</string>
+            </array>
+            <key>UTTypeDescription</key>
+            <string>TuckByte Archive</string>
+            <key>UTTypeIdentifier</key>
+            <string>com.tuckbyte.archive</string>
+            <key>UTTypeTagSpecification</key>
+            <dict>
+                <key>public.filename-extension</key>
+                <array>
+                    <string>tuck</string>
+                </array>
+                <key>public.mime-type</key>
+                <string>application/x-tuckbyte-archive</string>
+            </dict>
         </dict>
     </array>
     <key>UTImportedTypeDeclarations</key>

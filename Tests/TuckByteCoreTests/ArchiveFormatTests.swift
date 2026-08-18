@@ -6,6 +6,8 @@ final class ArchiveFormatTests: XCTestCase {
         XCTAssertEqual(ArchiveFormat(fileURL: URL(fileURLWithPath: "sample.zip")), .zip)
         XCTAssertEqual(ArchiveFormat(fileURL: URL(fileURLWithPath: "sample.zip.001")), .splitZip)
         XCTAssertEqual(ArchiveFormat(fileURL: URL(fileURLWithPath: "sample.ZIP.025")), .splitZip)
+        XCTAssertEqual(ArchiveFormat(fileURL: URL(fileURLWithPath: "sample.tuck")), .tuck)
+        XCTAssertEqual(ArchiveFormat(fileURL: URL(fileURLWithPath: "sample.TUCK.025")), .splitTuck)
         XCTAssertEqual(ArchiveFormat(fileURL: URL(fileURLWithPath: "sample.7z")), .sevenZip)
         XCTAssertTrue(ArchiveFormat(fileURL: URL(fileURLWithPath: "sample.7z")).isSupportedForReading)
     }
@@ -17,7 +19,7 @@ final class ArchiveFormatTests: XCTestCase {
         XCTAssertEqual(ArchiveFormat(fileURL: URL(fileURLWithPath: "sample.tar")), .unsupported)
     }
 
-    func testOnlyZipCanBeCreated() {
-        XCTAssertEqual(ArchiveOutputFormat.allCases, [.zip])
+    func testZipAndTuckCanBeCreated() {
+        XCTAssertEqual(ArchiveOutputFormat.allCases, [.zip, .tuck])
     }
 }

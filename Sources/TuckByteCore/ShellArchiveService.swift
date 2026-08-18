@@ -7,12 +7,18 @@ public final class ShellArchiveService: ArchiveService {
     private let tarPath = "/usr/bin/tar"
     private let dittoPath = "/usr/bin/ditto"
     private let minizipEngine = MinizipArchiveEngine()
+    private let tuckEngine: TuckArchiveEngine
 
     public init(fileManager: FileManager = .default) {
         self.fileManager = fileManager
+        self.tuckEngine = TuckArchiveEngine(fileManager: fileManager)
     }
 
     public func inspect(archiveURL: URL) throws -> [ArchiveEntry] {
+        try inspect(archiveURL: archiveURL, password: nil)
+    }
+
+    public func inspect(archiveURL: URL, password: String?) throws -> [ArchiveEntry] {
         let preparedArchive = try prepareReadableArchive(archiveURL)
         defer { preparedArchive.removeTemporaryFiles(fileManager: fileManager) }
         let format = ArchiveFormat(fileURL: archiveURL)
@@ -23,6 +29,11 @@ public final class ShellArchiveService: ArchiveService {
                 readableURL: preparedArchive.url,
                 originalURL: archiveURL,
                 isSplitArchive: format == .splitZip
+            )
+        case .tuck, .splitTuck:
+            return try tuckEngine.inspect(
+                archiveURL: preparedArchive.url,
+                password: password
             )
         case .sevenZip:
             return try inspectSevenZip(archiveURL: preparedArchive.url)
@@ -149,6 +160,11 @@ public final class ShellArchiveService: ArchiveService {
         archiveURL: URL
     ) throws -> ArchiveEncryptionMethod {
         let format = ArchiveFormat(fileURL: archiveURL)
+        if format == .tuck || format == .splitTuck {
+            let preparedArchive = try prepareReadableArchive(archiveURL)
+            defer { preparedArchive.removeTemporaryFiles(fileManager: fileManager) }
+            return try tuckEngine.encryptionMethod(for: preparedArchive.url)
+        }
         guard format == .zip || format == .splitZip else {
             return .none
         }
@@ -170,9 +186,32 @@ public final class ShellArchiveService: ArchiveService {
         destinationURL: URL,
         password: String?
     ) throws {
+        try extract(
+            archiveURL: archiveURL,
+            destinationURL: destinationURL,
+            password: password,
+            operation: nil
+        )
+    }
+
+    public func extract(
+        archiveURL: URL,
+        destinationURL: URL,
+        password: String?,
+        operation: ArchiveOperation?
+    ) throws {
         let preparedArchive = try prepareReadableArchive(archiveURL)
         defer { preparedArchive.removeTemporaryFiles(fileManager: fileManager) }
         let format = ArchiveFormat(fileURL: archiveURL)
+        if format == .tuck || format == .splitTuck {
+            try tuckEngine.extract(
+                archiveURL: preparedArchive.url,
+                destinationURL: destinationURL,
+                password: password,
+                operation: operation
+            )
+            return
+        }
         if fileManager.fileExists(atPath: destinationURL.path) {
             throw ArchiveServiceError.destinationAlreadyExists(destinationURL)
         }
@@ -205,6 +244,8 @@ public final class ShellArchiveService: ArchiveService {
                     arguments: ["-xf", preparedArchive.url.path, "-C", destinationURL.path],
                     currentDirectoryURL: nil
                 )
+            case .tuck, .splitTuck:
+                assertionFailure("TuckByte archives are handled before this switch")
             case .unsupported:
                 throw ArchiveServiceError.unsupportedFormat(format)
             }
@@ -219,7 +260,98 @@ public final class ShellArchiveService: ArchiveService {
         }
     }
 
+    public func extractEntry(
+        archiveURL: URL,
+        entry: ArchiveEntry,
+        destinationURL: URL,
+        password: String?
+    ) throws {
+        let format = ArchiveFormat(fileURL: archiveURL)
+        guard format == .tuck || format == .splitTuck else {
+            try extractEntryUsingWholeArchive(
+                archiveURL: archiveURL,
+                entry: entry,
+                destinationURL: destinationURL,
+                password: password
+            )
+            return
+        }
+        let preparedArchive = try prepareReadableArchive(archiveURL)
+        defer { preparedArchive.removeTemporaryFiles(fileManager: fileManager) }
+        try tuckEngine.extractEntry(
+            archiveURL: preparedArchive.url,
+            path: entry.path,
+            destinationURL: destinationURL,
+            password: password
+        )
+    }
+
+    private func extractEntryUsingWholeArchive(
+        archiveURL: URL,
+        entry: ArchiveEntry,
+        destinationURL: URL,
+        password: String?
+    ) throws {
+        let components = entry.path.split(separator: "/").map(String.init)
+        guard !entry.path.hasPrefix("/"),
+              !components.isEmpty,
+              components.allSatisfy({ $0 != "." && $0 != ".." }) else {
+            throw ArchiveServiceError.unsafeArchiveEntry(entry.path)
+        }
+        guard !fileManager.fileExists(atPath: destinationURL.path) else {
+            throw ArchiveServiceError.destinationAlreadyExists(destinationURL)
+        }
+        let stagingRoot = fileManager.temporaryDirectory
+            .appendingPathComponent("TuckByte-Entry-\(UUID().uuidString)", isDirectory: true)
+        let extractedRoot = stagingRoot.appendingPathComponent("Extracted", isDirectory: true)
+        try fileManager.createDirectory(at: stagingRoot, withIntermediateDirectories: true)
+        defer { try? fileManager.removeItem(at: stagingRoot) }
+        try extract(archiveURL: archiveURL, destinationURL: extractedRoot, password: password)
+        let extractedURL = components.reduce(extractedRoot) { $0.appendingPathComponent($1) }
+        let rootPath = extractedRoot.standardizedFileURL.path + "/"
+        guard extractedURL.standardizedFileURL.path.hasPrefix(rootPath),
+              fileManager.fileExists(atPath: extractedURL.path) else {
+            throw ArchiveServiceError.archiveEntryNotFound(entry.path)
+        }
+        try fileManager.copyItem(at: extractedURL, to: destinationURL)
+    }
+
+    public func extractEntry(
+        archiveURL: URL,
+        entry: ArchiveEntry,
+        destinationURL: URL
+    ) throws {
+        try extractEntry(
+            archiveURL: archiveURL,
+            entry: entry,
+            destinationURL: destinationURL,
+            password: nil
+        )
+    }
+
     public func createZip(from sourceURLs: [URL], destinationURL: URL, settings: CompressionSettings = .standard) throws {
+        try createArchive(from: sourceURLs, destinationURL: destinationURL, settings: settings)
+    }
+
+    public func createArchive(
+        from sourceURLs: [URL],
+        destinationURL: URL,
+        settings: CompressionSettings = .standard
+    ) throws {
+        try createArchive(
+            from: sourceURLs,
+            destinationURL: destinationURL,
+            settings: settings,
+            operation: nil
+        )
+    }
+
+    public func createArchive(
+        from sourceURLs: [URL],
+        destinationURL: URL,
+        settings: CompressionSettings,
+        operation: ArchiveOperation?
+    ) throws {
         guard settings.outputFormat.isSupportedForCreation else {
             throw ArchiveServiceError.unsupportedCreationFormat(settings.outputFormat)
         }
@@ -230,6 +362,15 @@ public final class ShellArchiveService: ArchiveService {
             guard fileManager.fileExists(atPath: sourceURL.path) else {
                 throw ArchiveServiceError.fileDoesNotExist(sourceURL)
             }
+        }
+        if settings.outputFormat == .tuck {
+            try createTuckArchive(
+                from: sourceURLs,
+                destinationURL: destinationURL,
+                settings: settings,
+                operation: operation
+            )
+            return
         }
         let createsSplitArchive = settings.volumeSizeBytes != nil
         if !createsSplitArchive && fileManager.fileExists(atPath: destinationURL.path) {
@@ -295,6 +436,37 @@ public final class ShellArchiveService: ArchiveService {
         }
     }
 
+    public func changePassword(
+        archiveURL: URL,
+        oldPassword: String,
+        newPassword: String
+    ) throws {
+        guard ArchiveFormat(fileURL: archiveURL) == .tuck else {
+            throw ArchiveServiceError.tuckArchiveUnsupportedFeature(
+                "password change is available for a single .tuck file"
+            )
+        }
+        try tuckEngine.changePassword(
+            archiveURL: archiveURL,
+            oldPassword: oldPassword,
+            newPassword: newPassword
+        )
+    }
+
+    private func createTuckArchive(
+        from sourceURLs: [URL],
+        destinationURL: URL,
+        settings: CompressionSettings,
+        operation: ArchiveOperation?
+    ) throws {
+        try tuckEngine.create(
+            from: sourceURLs,
+            destinationURL: destinationURL,
+            settings: settings,
+            operation: operation
+        )
+    }
+
     private func prepareReadableArchive(_ archiveURL: URL) throws -> PreparedArchive {
         guard fileManager.fileExists(atPath: archiveURL.path) else {
             throw ArchiveServiceError.fileDoesNotExist(archiveURL)
@@ -304,6 +476,8 @@ public final class ShellArchiveService: ArchiveService {
             throw ArchiveServiceError.unsupportedFormat(format)
         }
 
+        // Native `.tuck` reads consecutive volumes directly through its
+        // random-access source, so only legacy split ZIP needs assembly.
         guard format == .splitZip else {
             return PreparedArchive(url: archiveURL, temporaryRootURL: nil)
         }

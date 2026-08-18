@@ -15,7 +15,13 @@ final class ArchiveViewModel: ObservableObject {
             compressionLevel = Double(compressionSpeed.defaultCompressionLevel)
         }
     }
-    @Published var outputFormat: ArchiveOutputFormat = .zip
+    @Published var outputFormat: ArchiveOutputFormat = .zip {
+        didSet {
+            if outputFormat == .tuck && encryptionMethod == .zipCrypto {
+                encryptionMethod = .aes256
+            }
+        }
+    }
     @Published var isSplitArchiveEnabled = false
     @Published var splitVolumeSizePreset: SplitVolumeSizePreset = .hundredMB
     @Published var customSplitVolumeSizeMB = "100"
@@ -24,11 +30,13 @@ final class ArchiveViewModel: ObservableObject {
     @Published var encryptionPasswordConfirmation = ""
     @Published var archiveEncryptionMethod: ArchiveEncryptionMethod = .none
     @Published var archivePassword = ""
-    @Published var statusMessage = "拖放 ZIP 或 7z 檔，或使用工具列開始。"
+    @Published var statusMessage = "拖放 .tuck、ZIP 或 7z 檔，或使用工具列開始。"
     @Published var errorMessage: String?
     @Published var isWorking = false
+    @Published var operationProgress: ArchiveOperation.Snapshot?
 
     private let archiveService: ArchiveService
+    private var currentOperation: ArchiveOperation?
 
     init(archiveService: ArchiveService = ShellArchiveService()) {
         self.archiveService = archiveService
@@ -39,7 +47,7 @@ final class ArchiveViewModel: ObservableObject {
     }
 
     var selectedFormatDescription: String {
-        guard let archiveURL = archiveURL else { return "ZIP 初版" }
+        guard let archiveURL = archiveURL else { return outputFormat.displayName }
         return ArchiveFormat(fileURL: archiveURL).displayName
     }
 
@@ -49,6 +57,16 @@ final class ArchiveViewModel: ObservableObject {
 
     var archiveIsEncrypted: Bool {
         archiveEncryptionMethod != .none
+    }
+
+    var archiveIndexRequiresUnlock: Bool {
+        guard archiveIsEncrypted, entries.isEmpty, let archiveURL = archiveURL else { return false }
+        let format = ArchiveFormat(fileURL: archiveURL)
+        return format == .tuck || format == .splitTuck
+    }
+
+    var availableEncryptionMethods: [ArchiveEncryptionMethod] {
+        outputFormat == .tuck ? [.none, .aes256] : ArchiveEncryptionMethod.allCases
     }
 
     var visibleEntries: [ArchiveEntry] {
@@ -75,7 +93,7 @@ final class ArchiveViewModel: ObservableObject {
         panel.allowsMultipleSelection = false
         panel.canChooseFiles = true
         panel.canChooseDirectories = false
-        panel.allowedFileTypes = ["zip", "001", "7z"]
+        panel.allowedFileTypes = ["tuck", "zip", "001", "7z"]
         if panel.runModal() == .OK, let url = panel.url {
             loadArchive(url)
         }
@@ -86,7 +104,12 @@ final class ArchiveViewModel: ObservableObject {
             let encryptionMethod = try self.archiveService.encryptionMethod(
                 archiveURL: url
             )
-            let loadedEntries = try self.archiveService.inspect(archiveURL: url)
+            let format = ArchiveFormat(fileURL: url)
+            let indexIsEncrypted = encryptionMethod != .none
+                && (format == .tuck || format == .splitTuck)
+            let loadedEntries = indexIsEncrypted
+                ? []
+                : try self.archiveService.inspect(archiveURL: url)
             DispatchQueue.main.async {
                 self.workspaceMode = .extract
                 self.archiveURL = url
@@ -94,9 +117,31 @@ final class ArchiveViewModel: ObservableObject {
                 self.currentArchiveDirectoryPath = ""
                 self.archiveEncryptionMethod = encryptionMethod
                 self.archivePassword = ""
-                self.statusMessage = encryptionMethod == .none
+                self.statusMessage = indexIsEncrypted
+                    ? "索引已加密；請輸入密碼後解鎖內容清單。"
+                    : encryptionMethod == .none
                     ? "已讀取 \(loadedEntries.count) 個項目。"
                     : "已讀取 \(loadedEntries.count) 個項目，解壓時需要密碼。"
+            }
+        }
+    }
+
+    func unlockArchiveIndex() {
+        guard let archiveURL = archiveURL else { return }
+        guard !archivePassword.isEmpty else {
+            errorMessage = ArchiveServiceError.archivePasswordRequired.errorDescription
+            statusMessage = errorMessage ?? "操作失敗。"
+            return
+        }
+        perform("正在解鎖加密索引...") {
+            let loadedEntries = try self.archiveService.inspect(
+                archiveURL: archiveURL,
+                password: self.archivePassword
+            )
+            DispatchQueue.main.async {
+                self.entries = loadedEntries
+                self.currentArchiveDirectoryPath = ""
+                self.statusMessage = "已解鎖並讀取 \(loadedEntries.count) 個項目。"
             }
         }
     }
@@ -127,7 +172,7 @@ final class ArchiveViewModel: ObservableObject {
     func openDocumentURL(_ url: URL) {
         guard url.isFileURL else { return }
         guard ArchiveFormat(fileURL: url).isSupportedForReading else {
-            errorMessage = "目前只能瀏覽 ZIP、分割 ZIP 或 7z 壓縮檔。"
+            errorMessage = "目前只能瀏覽 .tuck、ZIP、分割壓縮檔或 7z。"
             statusMessage = errorMessage ?? "操作失敗。"
             return
         }
@@ -140,7 +185,7 @@ final class ArchiveViewModel: ObservableObject {
 
     func extractSelectedArchive() {
         guard let archiveURL = archiveURL else {
-            errorMessage = "請先開啟 ZIP 或 7z 壓縮檔。"
+            errorMessage = "請先開啟 .tuck、ZIP 或 7z 壓縮檔。"
             return
         }
         let panel = NSOpenPanel()
@@ -159,11 +204,13 @@ final class ArchiveViewModel: ObservableObject {
         )
         guard extractionPasswordIsValid else { return }
         let password = archiveIsEncrypted ? archivePassword : nil
-        perform("正在解壓到 \(destinationURL.lastPathComponent)...") {
+        let operation = beginArchiveOperation()
+        perform("正在解壓到 \(destinationURL.lastPathComponent)...", operation: operation) {
             try self.archiveService.extract(
                 archiveURL: archiveURL,
                 destinationURL: destinationURL,
-                password: password
+                password: password,
+                operation: operation
             )
             DispatchQueue.main.async {
                 self.statusMessage = "解壓完成：\(destinationURL.path)"
@@ -173,7 +220,7 @@ final class ArchiveViewModel: ObservableObject {
 
     func extractEntry(_ entry: ArchiveEntry) {
         guard let archiveURL = archiveURL else {
-            errorMessage = "請先開啟 ZIP 或 7z 壓縮檔。"
+            errorMessage = "請先開啟 .tuck、ZIP 或 7z 壓縮檔。"
             return
         }
 
@@ -408,8 +455,13 @@ final class ArchiveViewModel: ObservableObject {
         configureSavePanel(savePanel, baseName: "Archive")
         guard savePanel.runModal() == .OK, let destinationURL = savePanel.url else { return }
 
-        perform("正在以目前設定建立 \(destinationURL.lastPathComponent)...") {
-            try self.createZip(from: self.pendingItems.map { $0.url }, destinationURL: destinationURL)
+        let operation = beginArchiveOperation()
+        perform("正在以目前設定建立 \(destinationURL.lastPathComponent)...", operation: operation) {
+            try self.createZip(
+                from: self.pendingItems.map { $0.url },
+                destinationURL: destinationURL,
+                operation: operation
+            )
         }
     }
 
@@ -421,7 +473,7 @@ final class ArchiveViewModel: ObservableObject {
         case .extract:
             guard urls.count == 1,
                   ArchiveFormat(fileURL: urls[0]).isSupportedForReading else {
-                errorMessage = "解壓縮模式只能拖入一個 ZIP、分割 ZIP 或 7z 壓縮檔。"
+                errorMessage = "解壓縮模式只能拖入一個 .tuck、ZIP、分割壓縮檔或 7z。"
                 statusMessage = errorMessage ?? "操作失敗。"
                 return
             }
@@ -429,17 +481,28 @@ final class ArchiveViewModel: ObservableObject {
         }
     }
 
-    private func createZip(from sourceURLs: [URL], destinationURL: URL) throws {
+    func cancelCurrentOperation() {
+        currentOperation?.cancel()
+        statusMessage = "正在取消操作..."
+    }
+
+    private func createZip(
+        from sourceURLs: [URL],
+        destinationURL: URL,
+        operation: ArchiveOperation? = nil
+    ) throws {
         let settings = currentCompressionSettings
-        try self.archiveService.createZip(
+        try self.archiveService.createArchive(
             from: sourceURLs,
             destinationURL: destinationURL,
-            settings: settings
+            settings: settings,
+            operation: operation
         )
         DispatchQueue.main.async {
+            let formatName = settings.outputFormat.displayName
             self.statusMessage = settings.volumeSizeBytes != nil
-                ? "已建立分割 ZIP：\(destinationURL.path)"
-                : "已建立 ZIP：\(destinationURL.path)"
+                ? "已建立分割 \(formatName)：\(destinationURL.path)"
+                : "已建立 \(formatName)：\(destinationURL.path)"
         }
     }
 
@@ -496,12 +559,12 @@ final class ArchiveViewModel: ObservableObject {
             statusMessage = errorMessage ?? "操作失敗。"
             return false
         }
+        if outputFormat == .tuck && encryptionMethod == .zipCrypto {
+            errorMessage = ".tuck 不支援不安全的 ZipCrypto；請改用 AES-256。"
+            statusMessage = errorMessage ?? "操作失敗。"
+            return false
+        }
         if isSplitArchiveEnabled {
-            guard outputFormat == .zip else {
-                errorMessage = "分割壓縮檔目前只支援 ZIP 格式。"
-                statusMessage = errorMessage ?? "操作失敗。"
-                return false
-            }
             guard let volumeSizeBytes = splitVolumeSizeBytes,
                   volumeSizeBytes >= 1_048_576 else {
                 errorMessage = "自訂分卷大小必須是大於或等於 1 的整數 MB。"
@@ -517,7 +580,7 @@ final class ArchiveViewModel: ObservableObject {
         baseName: String
     ) {
         let suffix = isSplitArchiveEnabled
-            ? "zip.001"
+            ? "\(outputFormat.fileExtension).001"
             : outputFormat.fileExtension
         savePanel.allowedFileTypes = [isSplitArchiveEnabled ? "001" : suffix]
         savePanel.nameFieldStringValue = "\(baseName).\(suffix)"
@@ -526,12 +589,28 @@ final class ArchiveViewModel: ObservableObject {
 
     private func archiveBaseName(for archiveURL: URL) -> String {
         let logicalURL = SplitZipArchive.logicalArchiveURL(for: archiveURL)
+            ?? SplitTuckArchive.logicalArchiveURL(for: archiveURL)
             ?? archiveURL
         let baseName = logicalURL.deletingPathExtension().lastPathComponent
         return baseName.isEmpty ? "Archive" : baseName
     }
 
-    private func perform(_ message: String, work: @escaping () throws -> Void) {
+    private func beginArchiveOperation() -> ArchiveOperation {
+        let operation = ArchiveOperation { [weak self] snapshot in
+            DispatchQueue.main.async {
+                self?.operationProgress = snapshot
+            }
+        }
+        currentOperation = operation
+        operationProgress = nil
+        return operation
+    }
+
+    private func perform(
+        _ message: String,
+        operation: ArchiveOperation? = nil,
+        work: @escaping () throws -> Void
+    ) {
         errorMessage = nil
         statusMessage = message
         isWorking = true
@@ -540,10 +619,18 @@ final class ArchiveViewModel: ObservableObject {
                 try work()
                 DispatchQueue.main.async {
                     self.isWorking = false
+                    if self.currentOperation === operation {
+                        self.currentOperation = nil
+                        self.operationProgress = nil
+                    }
                 }
             } catch {
                 DispatchQueue.main.async {
                     self.isWorking = false
+                    if self.currentOperation === operation {
+                        self.currentOperation = nil
+                        self.operationProgress = nil
+                    }
                     self.errorMessage = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
                     self.statusMessage = self.errorMessage ?? "操作失敗。"
                 }

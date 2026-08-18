@@ -1,7 +1,23 @@
 # Third-Party and Platform Notices
 
 This repository does not vendor third-party Swift packages or prebuilt
-third-party binaries. It vendors the source of the archive engine listed below.
+third-party binaries. It vendors the following upstream C source releases.
+
+## Zstandard
+
+TuckByte includes Zstandard 1.5.7 source from <https://github.com/facebook/zstd>
+for native `.tuck` compression and decompression. Zstandard is distributed
+under the BSD 3-Clause License. The complete notice is preserved at
+`ThirdParty/zstd/LICENSE` and copied into packaged application resources.
+
+## Argon2
+
+TuckByte includes the official Argon2 reference source release `20190702`
+(Argon2 v1.3) from <https://github.com/P-H-C/phc-winner-argon2> for `.tuck`
+password key derivation. The vendored files are distributed under the CC0 1.0
+Universal dedication, as selected by the upstream dual-license notice. The
+complete notice is preserved at `ThirdParty/argon2/LICENSE` and copied into
+packaged application resources.
 
 ## minizip-ng
 
@@ -56,3 +72,7 @@ with TuckByte.
 The TuckByte name, source code, and repository-native icon artwork in this
 repository are provided under the repository's MIT License unless a file states
 otherwise.
+
+The project's MIT License does not replace or relicense Zstandard, Argon2,
+minizip-ng, Apple components, or macOS system tools. A source or binary
+distributor must retain the corresponding notices.

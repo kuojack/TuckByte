@@ -54,6 +54,7 @@ public final class ArchiveBatchExtractor {
     public func availableDestination(for archiveURL: URL) -> URL {
         let parentURL = archiveURL.deletingLastPathComponent()
         let logicalArchiveURL = SplitZipArchive.logicalArchiveURL(for: archiveURL)
+            ?? SplitTuckArchive.logicalArchiveURL(for: archiveURL)
             ?? archiveURL
         let baseName = logicalArchiveURL.deletingPathExtension().lastPathComponent
         let initialURL = parentURL.appendingPathComponent(baseName, isDirectory: true)
@@ -76,6 +77,7 @@ public final class ArchiveBatchExtractor {
         var seenPaths = Set<String>()
         return archiveURLs.compactMap { archiveURL in
             let canonicalURL = SplitZipArchive.firstVolumeURL(for: archiveURL)
+                ?? SplitTuckArchive.firstVolumeURL(for: archiveURL)
                 ?? archiveURL
             let standardizedURL = canonicalURL.standardizedFileURL
             guard seenPaths.insert(standardizedURL.path).inserted else {

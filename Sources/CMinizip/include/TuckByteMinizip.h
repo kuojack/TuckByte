@@ -2,6 +2,10 @@
 #define TUCKBYTE_MINIZIP_H
 
 #include <stdint.h>
+#ifndef SWIFT_PACKAGE
+#include "zstd.h"
+#include "argon2.h"
+#endif
 
 #ifdef __cplusplus
 extern "C" {
